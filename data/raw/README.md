@@ -1,0 +1,1 @@
+Place only source datasets whose license permits local use here. Preserve source files unchanged. Do not commit downloaded datasets or identifying data. Use the dashboard's CSV importer or document a reviewed conversion to `user_id,permission_id`.
