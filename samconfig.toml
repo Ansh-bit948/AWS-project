@@ -1,0 +1,8 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "ieai-alp"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AllowedOrigin='*' AppName='ieai-alp'"
+confirm_changeset = true
+fail_on_empty_changeset = false
