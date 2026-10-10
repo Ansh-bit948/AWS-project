@@ -8,9 +8,7 @@ An evidence-backed access-governance research application for role mining, user 
 
 ```mermaid
 flowchart LR
-  Admin[Administrator browser] -->|HTTPS| CF[CloudFront]
-  CF -->|Origin Access Control| Web[S3 private static site]
-  Admin -->|Cognito JWT| API[API Gateway HTTP API]
+  Admin[Local administrator browser] -->|Cognito JWT| API[API Gateway HTTP API]
   API -->|least-privilege invoke| LAPI[Lambda API / signed upload URL]
   LAPI -->|raw CSV| S3[S3 private raw bucket]
   S3 -->|ObjectCreated: raw/| Worker[Lambda analyzer]
@@ -21,7 +19,7 @@ flowchart LR
   Budget[AWS Budget alert] -. email alert .-> Owner[Project owner]
 ```
 
-The deployable AWS mode uses **Amazon S3, AWS Lambda, API Gateway HTTP API, Amazon Cognito, DynamoDB, CloudFront, IAM, and AWS Budgets**. The browser requests an upload URL from the Cognito-protected API, uploads the CSV to private S3, and the S3 event invokes the analysis Lambda. Analysis results are written to S3 (to avoid DynamoDB's 400 KB item limit); DynamoDB stores searchable run metadata and the artifact pointer. The browser reads results through the authenticated API.
+The demo deploys **Amazon S3, AWS Lambda, API Gateway HTTP API, Amazon Cognito, DynamoDB, IAM, and AWS Budgets** for the backend. The UI stays on the student's computer and calls the authenticated API from `http://127.0.0.1:8000`; no public website or CloudFront distribution is created. The browser requests an upload URL from the Cognito-protected API, uploads the CSV to private S3, and the S3 event invokes the analysis Lambda. Analysis results are written to S3 (to avoid DynamoDB's 400 KB item limit); DynamoDB stores searchable run metadata and the artifact pointer.
 
 AWS IAM Access Analyzer is an optional, separately run validation step for the stack's IAM policies. It can report policy findings; the project does not call it a Zelkova proof of the mined dataset permissions. Do not attach generated dataset labels as AWS IAM permissions. They are not valid AWS action/resource names.
 
@@ -29,10 +27,10 @@ The local mode is fully usable without AWS: FastAPI, SQLite, and static files ru
 
 ### Cost and security notes
 
-- The template avoids EC2, RDS, Neptune, NAT gateways, and always-on compute. Lambda and API Gateway are request-driven; DynamoDB uses on-demand billing; S3 uploads expire after 30 days. CloudFront and Cognito complete the professional cloud architecture.
+- The template avoids EC2, RDS, Neptune, NAT gateways, public website hosting, and always-on compute. Lambda and API Gateway are request-driven; DynamoDB uses on-demand billing; S3 raw uploads expire after 30 days. The UI stays local to avoid public demo traffic.
 - **No design can promise $0 for all accounts and traffic.** AWS plan-specific allowances change: check the [current AWS Free Tier terms](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html) and [service pricing pages](https://aws.amazon.com/pricing/) for the account/region before deploy. Requests, storage, data transfer, account age, and free-plan eligibility affect charges. A Budget is an alert, **not** a spending cap or kill switch. Do not upgrade from an AWS Free account plan if the account must remain within its no-charge period.
-- CloudFront may take time to deploy. The stack creates S3, CloudFront, Cognito, Lambda, API Gateway, DynamoDB, and a Budget resource. Remove the stack after the course demo and remove retained S3 data if appropriate.
-- CloudFront serves the static app over HTTPS from a private S3 origin. The API requires a Cognito JWT. The browser token is held in `sessionStorage`; use a dedicated administrator account and sign out/close the session after a demo. Restrict `AllowedOrigin` to the CloudFront domain after first deployment. The default `*` eases initial setup but is not an access control; Cognito remains required.
+- The stack creates private S3, Cognito, Lambda, API Gateway, DynamoDB, and a Budget resource. Remove the stack after the course demo and remove retained S3 data if appropriate.
+- The API requires a Cognito JWT. The browser token is held in `sessionStorage`; use a dedicated administrator account and sign out/close the session after a demo. API and S3 CORS are restricted to the local UI origin `http://127.0.0.1:8000`.
 - The first administrator account is created manually with Cognito `AdminCreateUser`; public sign-up is disabled. The generated temporary password must be changed at first sign-in. The basic browser flow does not implement Cognito's `NEW_PASSWORD_REQUIRED` challenge yet; set a permanent password for the demo user from the Cognito console/CLI before sign-in.
 - AWS Budgets notifications are sent to the deployment email. Configure email verification as prompted. Budgets do not stop resources.
 
@@ -96,14 +94,14 @@ sam build --template-file infra/template.yaml
 sam deploy --template-file .aws-sam/build/template.yaml --guided --region us-east-1
 ```
 
-During guided deploy choose a unique `AppName`, supply your alert email, and review the CloudFormation change set. The first deployment outputs API URL, raw bucket, frontend bucket, Cognito user-pool IDs and CloudFront URL. Create an admin-only Cognito user and set its permanent password before using the console:
+During guided deploy choose a unique `AppName`, supply your alert email, and review the CloudFormation change set. The deployment outputs the API URL, raw bucket, and Cognito user-pool IDs. Create an admin-only Cognito user and set its permanent password before using the console:
 
 ```powershell
 aws cognito-idp admin-create-user --user-pool-id USER_POOL_ID --username ADMIN_EMAIL --user-attributes Name=email,Value=ADMIN_EMAIL --temporary-password 'Use-A-Unique-Temporary-Pass9!'
 aws cognito-idp admin-set-user-password --user-pool-id USER_POOL_ID --username ADMIN_EMAIL --password 'Use-A-Different-Permanent-Pass9!' --permanent
 ```
 
-Before uploading the static app, create `app/static/config.js` using the stack outputs:
+Create the ignored local file `app/static/config.js` using the stack outputs so the local UI talks to the AWS backend:
 
 ```javascript
 window.IEAI_CONFIG = {
@@ -113,11 +111,7 @@ window.IEAI_CONFIG = {
 };
 ```
 
-Set the stack `AllowedOrigin` to the CloudFront HTTPS origin in a follow-up deployment, then upload the frontend assets to the frontend bucket (`config.js` is deployment-specific and must not contain secrets):
-
-```powershell
-aws s3 sync app/static s3://FRONTEND_BUCKET --delete
-```
+Keep the UI local. In a separate terminal, run `uvicorn app.main:app --reload` and open <http://127.0.0.1:8000>. The AWS configuration file is ignored by Git and contains no secrets; it only holds the API URL, region, and public Cognito app client ID.
 
 The API endpoints are JWT protected: `POST /datasets/presign`, `GET /datasets`, `GET /analytics/{dataset_id}`, and `POST /security/validate`. The Access Analyzer route accepts `{"policy_document": { ...IAM identity policy... }}` and returns AWS policy validation findings. This checks IAM policy syntax and best-practice findings; it is not an access proof and does not validate the research UPA. Upload the CSV to the returned presigned URL with `Content-Type: text/csv`; the S3 event runs analysis. The `raw/` prefix triggers Lambda; derived artifacts use `results/` and do not retrigger it. The first page load requires an authenticated administrator session.
 
@@ -125,8 +119,7 @@ To remove the stack after your demo:
 
 ```powershell
 aws s3 rm s3://RAW_BUCKET --recursive
-aws s3 rm s3://FRONTEND_BUCKET --recursive
-sam delete --stack-name STACK_NAME
+sam delete --stack-name STACK_NAME --region us-east-1
 ```
 
 Review the CloudFormation stack resources first. Never run cleanup against a bucket that contains anything outside this project.
@@ -135,7 +128,7 @@ Review the CloudFormation stack resources first. Never run cleanup against a buc
 
 Suggested CV entry after running the system on the actual benchmark and inserting measured results:
 
-> Built IEAI-ALP, a serverless access-intelligence platform using Python, FastAPI, S3, Lambda, API Gateway, Cognito, DynamoDB, CloudFront, and IAM. Implemented reproducible ACL ingestion, role discovery, WSC/coverage analysis, risk-ranked permission review, and an auditable offline Q-learning experiment on [dataset and measured scale]; all recommendations require human approval.
+> Built IEAI-ALP, a serverless access-intelligence platform using Python, FastAPI, S3, Lambda, API Gateway, Cognito, DynamoDB, and IAM. Implemented reproducible ACL ingestion, role discovery, WSC/coverage analysis, risk-ranked permission review, and an auditable offline Q-learning experiment on [dataset and measured scale]; all recommendations require human approval.
 
 Do not claim patentability or novelty from implementation alone. Keep dated design notes and literature comparisons; consult your university IP office before public disclosure or filing. A patent claim needs a specific, non-obvious technical contribution and legal review.
 
