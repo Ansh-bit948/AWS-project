@@ -89,11 +89,11 @@ Open <http://127.0.0.1:8000>. Import the source CSV in the interface. API schema
 
 ## Deploy the AWS stack
 
-Requirements: AWS CLI configured for the intended account/region, AWS SAM CLI, and a verified notification email. Start in an account plan that matches your no-cost constraint. The AWS deployment is an explicit action that creates real resources and may incur charges outside applicable allowances.
+Requirements: AWS CLI configured for the intended account, AWS SAM CLI, and a verified notification email. Deploy this stack in `us-east-1`, where the AWS Budgets CloudFormation resource is available. Start in an account plan that matches your no-cost constraint. The AWS deployment is an explicit action that creates real resources and may incur charges outside applicable allowances.
 
 ```powershell
 sam build --template-file infra/template.yaml
-sam deploy --template-file .aws-sam/build/template.yaml --guided
+sam deploy --template-file .aws-sam/build/template.yaml --guided --region us-east-1
 ```
 
 During guided deploy choose a unique `AppName`, supply your alert email, and review the CloudFormation change set. The first deployment outputs API URL, raw bucket, frontend bucket, Cognito user-pool IDs and CloudFront URL. Create an admin-only Cognito user and set its permanent password before using the console:
