@@ -90,8 +90,8 @@ Resources:
   ProcessDatasetFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../
-      Handler: app.cloud_handler.process_s3
+      CodeUri: ../app/
+      Handler: cloud_handler.process_s3
       Policies:
         - Statement:
             - Effect: Allow
@@ -107,8 +107,8 @@ Resources:
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../
-      Handler: app.cloud_handler.api_handler
+      CodeUri: ../app/
+      Handler: cloud_handler.api_handler
       Policies:
         - Statement:
             - Effect: Allow
@@ -246,7 +246,7 @@ Resources:
         - Notification:
             NotificationType: ACTUAL
             ComparisonOperator: GREATER_THAN
-            Threshold: 0
+            Threshold: 0.1
             ThresholdType: ABSOLUTE_VALUE
           Subscribers:
             - SubscriptionType: EMAIL
