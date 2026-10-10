@@ -10,7 +10,11 @@ def stamp(): return datetime.now(timezone.utc).isoformat()
 
 def process_s3(event, context):
     """Triggered by raw/ CSV object creation. Persist source hash and computed evidence."""
-    from app.engine import compute
+    try:
+        from app.engine import compute
+    except ModuleNotFoundError:
+        # In the Lambda bundle, app/ is the function root and engine.py is top-level.
+        from engine import compute
     results=[]
     for record in event.get('Records',[]):
         bucket=record['s3']['bucket']['name']; key=urllib.parse.unquote_plus(record['s3']['object']['key'])
