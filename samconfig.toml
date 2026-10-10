@@ -4,6 +4,6 @@ stack_name = "ieai-alp"
 region = "us-east-1"
 resolve_s3 = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "AllowedOrigin='*' AppName='ieai-alp'"
+parameter_overrides = "AllowedOrigin='http://127.0.0.1:8000' AppName='ieai-alp'"
 confirm_changeset = true
 fail_on_empty_changeset = false

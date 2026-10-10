@@ -70,6 +70,10 @@ Resources:
             Status: Enabled
             Prefix: raw/
             ExpirationInDays: 30
+          - Id: ExpireResearchResults
+            Status: Enabled
+            Prefix: results/
+            ExpirationInDays: 30
       NotificationConfiguration:
         LambdaConfigurations:
           - Event: s3:ObjectCreated:*

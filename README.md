@@ -27,11 +27,11 @@ The local mode is fully usable without AWS: FastAPI, SQLite, and static files ru
 
 ### Cost and security notes
 
-- The template avoids EC2, RDS, Neptune, NAT gateways, public website hosting, and always-on compute. Lambda and API Gateway are request-driven; DynamoDB uses on-demand billing; S3 raw uploads expire after 30 days. The UI stays local to avoid public demo traffic.
+- The template avoids EC2, RDS, Neptune, NAT gateways, public website hosting, and always-on compute. Lambda and API Gateway are request-driven; DynamoDB uses on-demand billing; S3 raw uploads and analysis artifacts expire after 30 days. The UI stays local to avoid public demo traffic.
 - **No design can promise $0 for all accounts and traffic.** AWS plan-specific allowances change: check the [current AWS Free Tier terms](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html) and [service pricing pages](https://aws.amazon.com/pricing/) for the account/region before deploy. Requests, storage, data transfer, account age, and free-plan eligibility affect charges. A Budget is an alert, **not** a spending cap or kill switch. Do not upgrade from an AWS Free account plan if the account must remain within its no-charge period.
 - The stack creates private S3, Cognito, Lambda, API Gateway, DynamoDB, and a Budget resource. Remove the stack after the course demo and remove retained S3 data if appropriate.
 - The API requires a Cognito JWT. The browser token is held in `sessionStorage`; use a dedicated administrator account and sign out/close the session after a demo. API and S3 CORS are restricted to the local UI origin `http://127.0.0.1:8000`.
-- The first administrator account is created manually with Cognito `AdminCreateUser`; public sign-up is disabled. The generated temporary password must be changed at first sign-in. The basic browser flow does not implement Cognito's `NEW_PASSWORD_REQUIRED` challenge yet; set a permanent password for the demo user from the Cognito console/CLI before sign-in.
+- The first administrator account is created manually with Cognito `AdminCreateUser`; public sign-up is disabled. The generated temporary password must be changed at first sign-in; the local UI handles Cognito's `NEW_PASSWORD_REQUIRED` challenge and lets the administrator set a permanent password.
 - AWS Budgets notifications are sent to the deployment email. Configure email verification as prompted. Budgets do not stop resources.
 
 ## Data: real, public, traceable
