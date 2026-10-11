@@ -16,3 +16,7 @@ data/processed/*
 app/static/config.js
 .env
 .aws/
+
+.local/
+.playwright/
+node_modules/
