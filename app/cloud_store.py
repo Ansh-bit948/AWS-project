@@ -8,9 +8,10 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import ClientError
+from botocore.config import Config
 from .local_store import Conflict, stamp
 
-s3 = boto3.client('s3')
+s3 = boto3.client('s3',config=Config(signature_version='s3v4'))
 ddb = boto3.resource('dynamodb')
 transaction_client = boto3.client('dynamodb')
 serializer = TypeSerializer()

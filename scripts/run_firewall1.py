@@ -23,11 +23,12 @@ def main():
   writer=csv.writer(f); writer.writerow(("user_id","permission_id"))
   for ri,row in enumerate(lines,1): writer.writerows((f"U{ri:04d}",f"P{ci:04d}") for ci,bit in enumerate(row,1) if bit=="1")
  derived=OUT.read_bytes(); edges=sum(bit=="1" for row in lines for bit in row)
- manifest={"source_url":SOURCE,"source_title":"Firewall1 permission-to-user ACL matrix","license":LICENSE,"attribution_url":"https://creativecommons.org/licenses/by/4.0/","retrieved_at_utc":datetime.now(timezone.utc).isoformat(),"orientation":"source rows=users; source columns=permissions; each 1 is an observed grant","identifier_note":"U/P labels are positional labels for matrix row/column indices, not real identities or attributes","raw_path":"data/raw/firewall1_UPA.txt","raw_sha256":sha(raw),"derived_path":"data/processed/firewall1_upa.csv","derived_sha256":sha(derived),"dimensions":{"users":users,"permissions":permissions},"observed_grants":edges,"validation":{"binary_cells_only":True,"rectangular":True,"all_cells_checked":users*permissions}}
+ previous=json.loads(MANIFEST.read_text(encoding='utf-8')) if MANIFEST.exists() else {}
+ manifest={"source_url":SOURCE,"source_title":"Firewall1 permission-to-user ACL matrix","license":LICENSE,"attribution_url":"https://creativecommons.org/licenses/by/4.0/","retrieved_at_utc":previous.get("retrieved_at_utc",datetime.now(timezone.utc).isoformat()),"converted_at_utc":datetime.now(timezone.utc).isoformat(),"orientation":"source rows=users; source columns=permissions; each 1 is an observed grant","identifier_note":"U/P labels are positional labels for matrix row/column indices, not real identities or attributes","raw_path":"data/raw/firewall1_UPA.txt","raw_sha256":sha(raw),"derived_path":"data/processed/firewall1_upa.csv","derived_sha256":sha(derived),"dimensions":{"users":users,"permissions":permissions},"observed_grants":edges,"validation":{"binary_cells_only":True,"rectangular":True,"all_cells_checked":users*permissions}}
  async def run():
-  from app.main import import_csv, analytics
+  from app.main import import_csv, store
   result=await import_csv(UploadFile(filename=OUT.name,file=io.BytesIO(derived)),name="Firewall1 published ACL benchmark",source_url=SOURCE,license_note=LICENSE)
-  result["analysis"]=analytics(result["dataset_id"])["analysis"]; return result
+  result["analysis"]=store.get(result["dataset_id"])[1]; return result
  result=asyncio.run(run()); manifest["application_import"]={k:result[k] for k in ("dataset_id","run_id","sha256","counts")}
  MANIFEST.write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8"); ANALYSIS.write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8")
  print(json.dumps({"counts":result["counts"],"baseline":result["analysis"]["baseline"],"optimized":result["analysis"]["optimized"],"risk_findings":result["analysis"]["risk_findings_total"]},indent=2))

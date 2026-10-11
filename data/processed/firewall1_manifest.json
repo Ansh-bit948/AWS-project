@@ -4,6 +4,7 @@
   "license": "CC BY 4.0; attribution: On the Use of Max-SAT and PDDL in RBAC Maintenance, Firewall1 dataset",
   "attribution_url": "https://creativecommons.org/licenses/by/4.0/",
   "retrieved_at_utc": "2026-09-29T15:38:16.984266+00:00",
+  "converted_at_utc": "2026-10-11T13:56:15.406980+00:00",
   "orientation": "source rows=users; source columns=permissions; each 1 is an observed grant",
   "identifier_note": "U/P labels are positional labels for matrix row/column indices, not real identities or attributes",
   "raw_path": "data/raw/firewall1_UPA.txt",
@@ -21,14 +22,14 @@
     "all_cells_checked": 258785
   },
   "application_import": {
-    "dataset_id": "42771504-a47f-43ad-8ec8-4b6c4a0d519e",
-    "run_id": "3da3b011-aa72-409b-850b-cfa2a93083fc",
+    "dataset_id": "f06df575-721d-47bd-adfa-a31dc0c46176",
+    "run_id": "f68b3690-6343-470c-b3c7-921af9406305",
     "sha256": "cf5434adbbb891ba1ae4c9fb172510b81030d28b91ee4aebac95d64524426c91",
     "counts": {
       "users": 365,
       "permissions": 709,
       "assignments": 31919,
-      "roles": 116
+      "roles": 132
     }
   }
 }

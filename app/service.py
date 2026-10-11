@@ -17,6 +17,10 @@ def compact(a):
 
 def dispatch(method, path, query, body, store, actor):
     parts = path.strip('/').split('/')
+    if parts[0] == 'catalog' and len(parts) != 3:
+        return 404, {'error':'Route not found'}
+    if parts[0] == 'rl' and (len(parts) != 3 or parts[1] != 'train'):
+        return 404, {'error':'Route not found'}
     try:
         if method == 'GET' and parts == ['datasets']:
             return 200, {'datasets':store.datasets()}

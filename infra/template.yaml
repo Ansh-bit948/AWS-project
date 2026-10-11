@@ -109,7 +109,7 @@ Resources:
               Resource: !Sub 'arn:${AWS::Partition}:s3:::${AppName}-raw-${AWS::AccountId}-${AWS::Region}/results/*'
         - Statement:
             - Effect: Allow
-              Action: [dynamodb:PutItem]
+              Action: [dynamodb:PutItem, dynamodb:GetItem]
               Resource: !GetAtt ResultsTable.Arn
   ApiFunction:
     Type: AWS::Serverless::Function
@@ -122,11 +122,11 @@ Resources:
               Action: [s3:PutObject]
               Resource: !Sub 'arn:${AWS::Partition}:s3:::${AppName}-raw-${AWS::AccountId}-${AWS::Region}/raw/*'
             - Effect: Allow
-              Action: [s3:GetObject]
+              Action: [s3:GetObject, s3:PutObject]
               Resource: !Sub 'arn:${AWS::Partition}:s3:::${AppName}-raw-${AWS::AccountId}-${AWS::Region}/results/*'
         - Statement:
             - Effect: Allow
-              Action: [dynamodb:GetItem, dynamodb:Scan, dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:TransactWriteItems]
+              Action: [dynamodb:GetItem, dynamodb:Scan, dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem]
               Resource: !GetAtt ResultsTable.Arn
         - Statement:
             - Effect: Allow
@@ -141,16 +141,14 @@ Resources:
             Method: ANY
             Auth:
               Authorizer: CognitoAuthorizer
-  ApiLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${ApiFunction}'
-      RetentionInDays: 7
-  WorkerLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${ProcessDatasetFunction}'
-      RetentionInDays: 7
+        Preflight:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ResearchApi
+            Path: /{proxy+}
+            Method: OPTIONS
+            Auth:
+              Authorizer: NONE
   CognitoPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -177,13 +175,14 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       DefaultRouteSettings:
-        ThrottlingBurstLimit: 5
-        ThrottlingRateLimit: 2
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
       CorsConfiguration:
         AllowOrigins: [!Ref AllowedOrigin]
         AllowHeaders: [authorization,content-type]
         AllowMethods: [GET,POST,OPTIONS]
       Auth:
+        DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
           CognitoAuthorizer:
             IdentitySource: '$request.header.Authorization'

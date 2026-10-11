@@ -66,6 +66,8 @@ def process_s3(event,context):
     return results
 
 def api_handler(event,context):
+    if event.get('requestContext',{}).get('http',{}).get('method') == 'OPTIONS':
+        return response(204,{})
     claims = event.get('requestContext',{}).get('authorizer',{}).get('jwt',{}).get('claims',{})
     if not claims.get('sub'):
         return response(401,{'error':'Authenticated Cognito administrator required'})
@@ -95,12 +97,15 @@ def api_handler(event,context):
                                       'uploaded_at':ts,'expires_at':int(time.time())+30*86400})
             return response(200,{'dataset_id':did,'upload_url':url,'headers':{'content-type':'text/csv','if-none-match':'*',
                        **{'x-amz-meta-'+k:v for k,v in metadata.items()}},'max_bytes':MAX_BYTES,'expires_seconds':300})
+        if method == 'GET' and path == 'research/amazon':
+            from app.cloud_store import artifact
+            return response(200,artifact(store.bucket,'results/amazon-history/analysis.json'))
         if method == 'POST' and path == 'security/validate':
             document = body.get('policy_document')
             if not isinstance(document,(dict,str)):
                 raise ValueError('policy_document must be an IAM policy object or JSON string')
             import boto3
-            result = boto3.client('access-analyzer').validate_policy(policyType='IDENTITY_POLICY',policyDocument=json.dumps(document) if isinstance(document,dict) else document)
+            result = boto3.client('accessanalyzer').validate_policy(policyType='IDENTITY_POLICY',policyDocument=json.dumps(document) if isinstance(document,dict) else document)
             return response(200,{'findings':result.get('findings',[]),'scope':'IAM policy validation; not a proof of dataset access safety'})
         status,payload = dispatch(method,path,event.get('queryStringParameters') or {},body,store,claims['sub'])
         return response(status,payload)

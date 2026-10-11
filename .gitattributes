@@ -1,0 +1,6 @@
+* text=auto eol=lf
+data/raw/** -text
+data/processed/** -text
+*.pdf binary
+*.docx binary
+*.png binary
