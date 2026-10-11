@@ -2,6 +2,7 @@
 import json
 import sqlite3
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from .engine import compute
@@ -28,11 +29,16 @@ class LocalStore:
             CREATE TABLE IF NOT EXISTS models(id TEXT PRIMARY KEY,dataset_id TEXT,created_at TEXT,result TEXT);
             """)
             c.execute("PRAGMA journal_mode=WAL")
+    @contextmanager
     def db(self):
         c = sqlite3.connect(self.path, timeout=15)
         c.row_factory = sqlite3.Row
         c.execute("PRAGMA foreign_keys=ON")
-        return c
+        try:
+            with c:
+                yield c
+        finally:
+            c.close()
     def datasets(self):
         with self.db() as c:
             return [dict(r) | {'dataset_id': r['id'], 'status': 'ready'} for r in c.execute('SELECT * FROM datasets ORDER BY uploaded_at DESC')]
@@ -48,7 +54,7 @@ class LocalStore:
             c.execute('INSERT INTO policy_artifacts VALUES(?,?,?)',(did,1,json.dumps(result)))
             c.execute('INSERT INTO policy_versions VALUES(?,?,?,?,?,?)',(did,1,None,'Imported immutable source grants',actor,ts))
             self._audit(c,did,actor,'dataset_import',quality)
-        return {'dataset_id': did, 'counts': result['counts'], 'sha256': quality['sha256'], 'quality': quality}
+        return {'dataset_id': did, 'run_id': rid, 'counts': result['counts'], 'sha256': quality['sha256'], 'quality': quality}
     def get(self, did):
         with self.db() as c:
             d = c.execute('SELECT * FROM datasets WHERE id=?',(did,)).fetchone()

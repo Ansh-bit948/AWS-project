@@ -1,0 +1,22 @@
+{
+  "local": {
+    "login": false,
+    "browser_s3_upload": false,
+    "measured_data_visible": true,
+    "catalog_pagination": true,
+    "role_evidence": true,
+    "authorization_check": true,
+    "mobile_no_horizontal_overflow": true,
+    "page_errors": []
+  },
+  "aws": {
+    "login": true,
+    "browser_s3_upload": true,
+    "measured_data_visible": true,
+    "catalog_pagination": true,
+    "role_evidence": true,
+    "authorization_check": true,
+    "mobile_no_horizontal_overflow": true,
+    "page_errors": []
+  }
+}

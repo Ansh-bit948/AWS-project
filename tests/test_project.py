@@ -30,6 +30,7 @@ def upload(client):
     return r.json()['dataset_id']
 
 def test_source_hash_and_counts(rows):
+    assert hashlib.sha256((ROOT/'data/raw/firewall1_UPA.txt').read_bytes()).hexdigest()=='9a806f9370ad67c83b2cb9290a7bdfbd580cbc56226abe3f4016b7124ff1313d'
     assert hashlib.sha256(RAW).hexdigest()=='cf5434adbbb891ba1ae4c9fb172510b81030d28b91ee4aebac95d64524426c91'
     assert len(rows)==31919
     assert len({u for u,p in rows})==365

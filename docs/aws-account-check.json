@@ -1,0 +1,21 @@
+{
+  "verified_at_utc": "2026-10-11T13:27:14.944299+00:00",
+  "plan": "FREE",
+  "status": "ACTIVE",
+  "remaining_credit_usd": 140.0,
+  "expiration": "2027-03-22T22:59:07.752000+00:00",
+  "budget_amount_usd": 1,
+  "actual_spend_alert_usd": 0.1,
+  "notifications": [
+    {
+      "NotificationType": "ACTUAL",
+      "ComparisonOperator": "GREATER_THAN",
+      "Threshold": 0.1,
+      "ThresholdType": "ABSOLUTE_VALUE",
+      "NotificationState": "OK"
+    }
+  ],
+  "budget_is_spending_cap": false,
+  "cloudwatch_retention_days": 7,
+  "source_and_result_retention_days": 30
+}

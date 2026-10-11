@@ -6,14 +6,19 @@ const mode = new URLSearchParams(location.search).get('mode') === 'local' || !cl
 const isCloud = mode === 'aws';
 const tables = {roles: {offset: 0, search: ''}, profiles: {offset: 0, search: ''}, permission_catalog: {offset: 0, search: ''}};
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt = v => Number(v ?? 0).toLocaleString();
+const fmt = v => v === null || v === undefined ? 'Unavailable' : Number(v).toLocaleString();
 function status(text, error=false) { $('#status').textContent=text; $('#notice').textContent=error ? text : ''; $('#notice').hidden=!error; }
 function token() { return sessionStorage.getItem('ieai_token') || ''; }
 function signOut() { sessionStorage.removeItem('ieai_token'); selected=''; current=null; $('#appView').hidden=true; $('#empty').hidden=false; $('#loginOpen').textContent='Sign in'; status('Sign in required'); }
 async function call(path, options={}) {
   const headers=new Headers(options.headers || {});
   if(isCloud && token()) headers.set('authorization','Bearer '+token());
-  const r=await fetch((isCloud ? cloud.apiUrl : '/api') + path, {...options,headers});
+  let r;
+  for(let attempt=0;attempt<5;attempt++) {
+    r=await fetch((isCloud ? cloud.apiUrl : '/api') + path, {...options,headers});
+    if(r.status!==429)break;
+    await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
+  }
   const x=await r.json().catch(()=>({error:'Server returned an unreadable response'}));
   if(!r.ok) {
     if(isCloud && r.status===401) signOut();
@@ -91,7 +96,7 @@ async function refreshDatasets() {
   } catch(err) {status(err.message,true);}
 }
 $('#refresh').onclick=refreshDatasets;
-$('#datasetSelect').onchange=async e=>{selected=e.target.value;for(const s of Object.values(tables))s.offset=0;await load()};
+$('#datasetSelect').onchange=async e=>{selected=e.target.value;reviewOffset=0;for(const s of Object.values(tables))s.offset=0;await load()};
 async function load() {
   try {
     const payload=await call('/analytics/'+selected+'?compact=1'), a=payload.analysis, d=payload.dataset;
@@ -104,7 +109,7 @@ async function load() {
     const saving=a.baseline.wsc?(1-a.optimized.wsc/a.baseline.wsc)*100:0;
     $('#saving').textContent=saving.toFixed(1)+'%';$('#bar').style.width=Math.max(0,Math.min(100,saving))+'%';
     $('#coverage').textContent=(a.optimized.coverage*100).toFixed(2)+'%';
-    $('#integrity').textContent=fmt(a.optimized.permission_loss)+' missing · '+fmt(a.optimized.overgrants||0)+' extra grants';
+    $('#integrity').textContent=fmt(a.optimized.permission_loss)+' missing · '+fmt(a.optimized.overgrants)+' extra grants';
     $('#computeTime').textContent='Analysis '+fmt(a.performance?.compute_ms)+' ms · engine '+(a.engine_version||'1.0');
     const summary=a.risk_summary,total=a.risk_findings_total;
     $('#riskCount').textContent=fmt(total);$('#highRisk').textContent=fmt(summary.high);$('#medRisk').textContent=fmt(summary.medium);$('#lowRisk').textContent=fmt(summary.review);
@@ -113,7 +118,7 @@ async function load() {
     $('#findings').innerHTML=a.risk_findings.map(x=>'<div class="finding"><div><b>'+esc(x.user_id)+'</b><small>'+esc(x.reasons.join(' · '))+'</small></div><span class="score">'+x.score+'</span></div>').join('')||'<p>No findings under the current rules.</p>';
     $('#source').textContent=d.source_url;$('#license').textContent=d.license_note||'Not provided';$('#hash').textContent=d.sha256;
     $('#date').textContent=new Date(d.uploaded_at).toLocaleString();$('#runid').textContent=d.run_id||selected;$('#method').textContent=Object.values(a.methodology).join(' · ');
-    await Promise.all([loadTable('roles'),loadTable('profiles'),loadTable('permission_catalog'),loadReview(),loadHistory()]);
+    await Promise.all([loadTable('roles'),loadTable('profiles'),loadTable('permission_catalog'),loadReview(),loadHistory(),loadTemporal()]);
     status(isCloud?'Connected to authenticated AWS backend':'Connected to local backend');
   } catch(err) {status(err.message,true);}
 }
@@ -170,4 +175,15 @@ $('#authorizationForm').onsubmit=async e=>{
   try {const result=await post('/authorize/'+selected,{user_id:d.get('user_id'),permission_id:d.get('permission_id')});$('#authResult').textContent=(result.allowed?'ALLOWED':'DENIED')+' · policy v'+result.policy_version+' · roles '+(result.matching_roles.join(', ')||'none');}catch(x){$('#authResult').textContent=x.message;}
 };
 $('#export').onclick=async()=>{try{download(await call('/export/'+selected),'policy-'+selected+'-v'+version+'.json');}catch(x){status(x.message,true);}};
+let historical=null;
 refreshDatasets();
+
+async function loadTemporal() {
+  try {
+    historical=await call('/research/amazon');const x=historical;
+    const agreement=x.evaluation.observed_action_agreement;
+    $('#historySummary').textContent=fmt(x.counts.valid_events)+' genuine access changes ? '+fmt(x.counts.users)+' users ? '+fmt(x.counts.targets)+' target IDs. Training: '+fmt(x.model.training_records)+' earlier records; holdout: '+fmt(x.model.heldout_records)+' later records. Recorded-action agreement: '+(agreement===null?'unavailable':(agreement*100).toFixed(2)+'%')+'; majority baseline: '+(x.evaluation.majority_baseline_agreement*100).toFixed(2)+'%. Supported-action coverage: '+(x.evaluation.coverage*100).toFixed(2)+'%. Source history SHA-256: '+x.history_sha256;
+    $('#historyExport').disabled=false;
+  } catch(e) {$('#historySummary').textContent=e.message;$('#historyExport').disabled=true;}
+}
+$('#historyExport').onclick=()=>historical&&download(historical,'amazon-history-model.json');

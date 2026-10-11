@@ -34,6 +34,13 @@ async def import_csv(file: UploadFile=File(...), name: str=Form(''), source_url:
         raise HTTPException(400,str(e)) from e
     return store.import_data(pairs,{'name':name or file.filename,'source_url':source_url or 'User supplied; provenance not independently verified','license_note':license_note or 'Not provided'},quality)
 
+@app.get('/api/research/amazon')
+def amazon_research():
+    artifact = ROOT/'data'/'processed'/'amazon_history_analysis.json'
+    if not artifact.exists():
+        raise HTTPException(404,'Run scripts/prepare_amazon_history.py to compute the real historical experiment')
+    return FileResponse(artifact,media_type='application/json')
+
 @app.api_route('/api/{path:path}',methods=['GET','POST'])
 async def api(path: str, request: Request):
     try:

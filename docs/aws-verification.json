@@ -1,0 +1,36 @@
+{
+  "stack_status": "UPDATE_COMPLETE",
+  "region": "us-east-1",
+  "dataset_id": "7fbb6a6a-31c7-4e3c-98cc-c59d96c005b3",
+  "dataset_sha256": "cf5434adbbb891ba1ae4c9fb172510b81030d28b91ee4aebac95d64524426c91",
+  "counts": {
+    "users": 365,
+    "permissions": 709,
+    "assignments": 31919,
+    "roles": 132
+  },
+  "optimized": {
+    "roles": 132,
+    "ua_edges": 1506,
+    "pa_edges": 2874,
+    "wsc": 4512,
+    "coverage": 1.0,
+    "permission_loss": 0,
+    "overgrants": 0,
+    "factor_steps": 21,
+    "method": "greedy_support_factor"
+  },
+  "checks": {
+    "unauthenticated_denied": true,
+    "browser_cors_preflight": true,
+    "signed_s3_upload": true,
+    "lambda_source_analysis": true,
+    "cognito_sign_in": true,
+    "revoke_denies_access": true,
+    "restore_allows_access": true,
+    "source_hash_unchanged": true,
+    "validation_excluded_from_learning": true,
+    "dynamodb_audit_versions": 3
+  },
+  "iam_validation_findings": 0
+}

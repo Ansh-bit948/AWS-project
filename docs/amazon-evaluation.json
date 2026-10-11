@@ -1,0 +1,688 @@
+{
+  "experiment": "Amazon enterprise access-change history",
+  "source_url": "https://archive.ics.uci.edu/dataset/216/amazon+access+samples",
+  "citation": "Montanez, K. (2011). Amazon Access Samples. DOI:10.24432/C5JW2K",
+  "license": "CC BY 4.0",
+  "archive_sha256": "d493e3378508b7f3141253c421c2267923fd8ca60ea4088afe72b21b8228d224",
+  "history_sha256": "83db6197bd4a205b0fd7b0ce931123f16d98f379a26bdcfa2193be363b54bf17",
+  "measured_at_utc": "2026-10-11T13:24:18.738378+00:00",
+  "counts": {
+    "valid_events": 715651,
+    "users": 17607,
+    "targets": 6442,
+    "actions": {
+      "remove_access": 10908,
+      "add_access": 704743
+    },
+    "excluded_rows": {
+      "missing_or_invalid_timestamp": 412
+    }
+  },
+  "time_range": {
+    "first": "2005-03-25T10:53:41",
+    "last": "2010-08-31T18:03:18"
+  },
+  "model": {
+    "algorithm": "Offline terminal Q-learning / contextual bandit; gamma=0, alpha=0.1",
+    "actions": [
+      "add_access",
+      "remove_access"
+    ],
+    "state": "Only preceding per-user change count, removal fraction and request-hour bucket",
+    "reward": "-min(1, log(1+recorded authorization delay seconds)/log(1+86400)); observed action only",
+    "action_mask": "Require at least 5 observed training examples for a state/action; otherwise abstain",
+    "q_table": {
+      "volume:0|remove:0|hour:1": [
+        -0.04863703591571956,
+        -0.04801224453517824
+      ],
+      "volume:0|remove:0|hour:2": [
+        -0.2734214419863797,
+        -0.041296511234322
+      ],
+      "volume:1|remove:0|hour:2": [
+        -0.5934040491276732,
+        -0.01134909189637545
+      ],
+      "volume:1|remove:2|hour:2": [
+        -0.05183822608943753,
+        -0.03742204886862288
+      ],
+      "volume:1|remove:0|hour:3": [
+        -0.1101791517445527,
+        -0.03513092880975634
+      ],
+      "volume:1|remove:0|hour:1": [
+        -0.10764480864255282,
+        -0.20454100013854837
+      ],
+      "volume:2|remove:0|hour:1": [
+        -0.09520034008646681,
+        -0.2830786698390252
+      ],
+      "volume:1|remove:2|hour:1": [
+        -0.5412615364635909,
+        -0.006098021900655646
+      ],
+      "volume:0|remove:0|hour:3": [
+        -0.07106903705017878,
+        -0.023782285412557017
+      ],
+      "volume:2|remove:0|hour:2": [
+        -0.41373595254986417,
+        -0.023321645529986904
+      ],
+      "volume:2|remove:1|hour:1": [
+        -0.20200700554863005,
+        0.0
+      ],
+      "volume:1|remove:1|hour:1": [
+        -0.18161901379013154,
+        -0.0054882197105900815
+      ],
+      "volume:1|remove:0|hour:0": [
+        -0.013172881772107747,
+        -0.00013844038745592066
+      ],
+      "volume:1|remove:1|hour:2": [
+        -0.07837714110197751,
+        0.0
+      ],
+      "volume:1|remove:1|hour:3": [
+        -0.0110855190014345,
+        0.0
+      ],
+      "volume:2|remove:0|hour:0": [
+        -0.2281164027980321,
+        -0.06616065860813486
+      ],
+      "volume:2|remove:0|hour:3": [
+        -0.17616702678186785,
+        -0.04543030025413415
+      ],
+      "volume:3|remove:0|hour:1": [
+        -0.013465296264627617,
+        -0.13440267173369214
+      ],
+      "volume:0|remove:0|hour:0": [
+        -2.8608337769492268e-05,
+        0.0
+      ],
+      "volume:3|remove:0|hour:0": [
+        -0.09971285342016618,
+        -0.06818259092791683
+      ],
+      "volume:3|remove:0|hour:2": [
+        -0.28428381552519183,
+        -0.013857433511545933
+      ],
+      "volume:2|remove:1|hour:3": [
+        -0.047810024408118296,
+        0.0
+      ],
+      "volume:2|remove:1|hour:2": [
+        -0.05402044988843321,
+        0.0
+      ],
+      "volume:1|remove:1|hour:0": [
+        -0.10373295207531393,
+        -0.0005170044231128563
+      ],
+      "volume:4|remove:0|hour:2": [
+        -0.1431362185805995,
+        -0.05978635781135973
+      ],
+      "volume:4|remove:0|hour:1": [
+        -5.648270311051524e-05,
+        -0.0255148839965414
+      ],
+      "volume:3|remove:0|hour:3": [
+        -0.15095780361052855,
+        -0.20392807264207422
+      ],
+      "volume:3|remove:1|hour:1": [
+        -0.054365354460795726,
+        0.0
+      ],
+      "volume:1|remove:2|hour:3": [
+        -0.09117020638700535,
+        0.0
+      ],
+      "volume:5|remove:0|hour:2": [
+        -0.12597350967787485,
+        -0.06700369785495305
+      ],
+      "volume:4|remove:0|hour:3": [
+        -0.1188954089700408,
+        -0.049828557070385075
+      ],
+      "volume:4|remove:0|hour:0": [
+        -0.21141841090774147,
+        -0.04807252987749609
+      ],
+      "volume:5|remove:0|hour:1": [
+        -0.002234659712698628,
+        -0.09170881207412761
+      ],
+      "volume:5|remove:0|hour:3": [
+        -0.11563836020633464,
+        -0.1320221327782889
+      ],
+      "volume:5|remove:0|hour:0": [
+        -0.1663170720921902,
+        -0.1136927360431406
+      ],
+      "volume:2|remove:1|hour:0": [
+        0.0,
+        0.0
+      ],
+      "volume:3|remove:1|hour:0": [
+        -0.09562684095098817,
+        0.0
+      ],
+      "volume:4|remove:1|hour:1": [
+        -0.07949442271943415,
+        0.0
+      ],
+      "volume:4|remove:1|hour:2": [
+        -0.03756632428013132,
+        0.0
+      ],
+      "volume:4|remove:1|hour:0": [
+        -0.10647822534060086,
+        0.0
+      ],
+      "volume:3|remove:1|hour:2": [
+        -0.14789945000781843,
+        0.0
+      ],
+      "volume:3|remove:1|hour:3": [
+        -0.11149175335267338,
+        0.0
+      ],
+      "volume:4|remove:1|hour:3": [
+        0.0,
+        0.0
+      ],
+      "volume:5|remove:1|hour:2": [
+        0.0,
+        0.0
+      ],
+      "volume:5|remove:1|hour:1": [
+        -0.3800265535142381,
+        0.0
+      ]
+    },
+    "training_records": 572399,
+    "heldout_records": 143252,
+    "split_timestamp": "2010-04-14T12:47:27"
+  },
+  "evaluation": {
+    "split": "Chronological 80/20; whole timestamps remain in one partition",
+    "coverage": 0.9999790578840086,
+    "abstained": 3,
+    "observed_action_agreement": 0.5756061124335946,
+    "majority_action_baseline": "add_access",
+    "majority_baseline_agreement": 0.9849216764861921,
+    "matched_action_mean_reward": -0.06360888149487053,
+    "limit": "Agreement is descriptive; recorded delay reflects observational selection. No causal/off-policy utility or safety guarantee."
+  },
+  "profile_samples": [
+    {
+      "user_id": "0",
+      "access_change_count": 5,
+      "add_count": 5,
+      "remove_count": 0,
+      "unique_targets": 4,
+      "first_change": "2009-10-12T02:08:09",
+      "last_change": "2010-08-11T00:59:07"
+    },
+    {
+      "user_id": "33281",
+      "access_change_count": 17,
+      "add_count": 17,
+      "remove_count": 0,
+      "unique_targets": 14,
+      "first_change": "2010-08-16T10:57:14",
+      "last_change": "2010-08-30T11:26:52"
+    },
+    {
+      "user_id": "33297",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2010-08-04T11:39:17",
+      "last_change": "2010-08-30T10:52:17"
+    },
+    {
+      "user_id": "33305",
+      "access_change_count": 9,
+      "add_count": 8,
+      "remove_count": 1,
+      "unique_targets": 6,
+      "first_change": "2009-08-14T17:41:22",
+      "last_change": "2010-08-19T10:35:16"
+    },
+    {
+      "user_id": "33310",
+      "access_change_count": 52,
+      "add_count": 52,
+      "remove_count": 0,
+      "unique_targets": 14,
+      "first_change": "2009-06-08T02:04:20",
+      "last_change": "2010-08-31T06:24:07"
+    },
+    {
+      "user_id": "33321",
+      "access_change_count": 112,
+      "add_count": 110,
+      "remove_count": 2,
+      "unique_targets": 45,
+      "first_change": "2008-02-11T17:39:03",
+      "last_change": "2010-08-31T16:46:24"
+    },
+    {
+      "user_id": "33334",
+      "access_change_count": 13,
+      "add_count": 13,
+      "remove_count": 0,
+      "unique_targets": 8,
+      "first_change": "2009-10-05T08:42:09",
+      "last_change": "2010-08-29T18:11:19"
+    },
+    {
+      "user_id": "33337",
+      "access_change_count": 88,
+      "add_count": 88,
+      "remove_count": 0,
+      "unique_targets": 8,
+      "first_change": "2005-07-18T16:44:43",
+      "last_change": "2010-08-18T11:19:31"
+    },
+    {
+      "user_id": "33355",
+      "access_change_count": 4,
+      "add_count": 4,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2010-05-25T09:47:25",
+      "last_change": "2010-08-03T17:27:33"
+    },
+    {
+      "user_id": "33379",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2009-11-17T13:04:09",
+      "last_change": "2009-12-02T15:11:58"
+    },
+    {
+      "user_id": "33392",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2010-03-22T09:42:58",
+      "last_change": "2010-03-22T09:43:02"
+    },
+    {
+      "user_id": "33398",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2010-05-26T08:41:44",
+      "last_change": "2010-05-26T08:41:48"
+    },
+    {
+      "user_id": "33400",
+      "access_change_count": 208,
+      "add_count": 208,
+      "remove_count": 0,
+      "unique_targets": 21,
+      "first_change": "2005-08-12T10:21:35",
+      "last_change": "2010-08-29T17:29:28"
+    },
+    {
+      "user_id": "33414",
+      "access_change_count": 74,
+      "add_count": 73,
+      "remove_count": 1,
+      "unique_targets": 20,
+      "first_change": "2009-12-28T14:55:25",
+      "last_change": "2010-08-31T09:12:48"
+    },
+    {
+      "user_id": "33424",
+      "access_change_count": 162,
+      "add_count": 157,
+      "remove_count": 5,
+      "unique_targets": 25,
+      "first_change": "2005-10-03T13:49:43",
+      "last_change": "2010-08-30T10:32:51"
+    },
+    {
+      "user_id": "33434",
+      "access_change_count": 21,
+      "add_count": 21,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2005-11-04T17:36:42",
+      "last_change": "2010-08-17T07:21:38"
+    },
+    {
+      "user_id": "33440",
+      "access_change_count": 41,
+      "add_count": 41,
+      "remove_count": 0,
+      "unique_targets": 9,
+      "first_change": "2008-04-20T09:15:06",
+      "last_change": "2010-08-29T18:11:14"
+    },
+    {
+      "user_id": "33445",
+      "access_change_count": 235,
+      "add_count": 235,
+      "remove_count": 0,
+      "unique_targets": 23,
+      "first_change": "2005-07-14T01:05:08",
+      "last_change": "2010-08-24T15:29:27"
+    },
+    {
+      "user_id": "33451",
+      "access_change_count": 25,
+      "add_count": 23,
+      "remove_count": 2,
+      "unique_targets": 7,
+      "first_change": "2008-08-08T12:15:35",
+      "last_change": "2010-07-14T04:16:50"
+    },
+    {
+      "user_id": "33456",
+      "access_change_count": 22,
+      "add_count": 22,
+      "remove_count": 0,
+      "unique_targets": 7,
+      "first_change": "2008-09-17T11:02:56",
+      "last_change": "2010-07-20T01:48:48"
+    },
+    {
+      "user_id": "33462",
+      "access_change_count": 21,
+      "add_count": 21,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2005-11-04T17:14:16",
+      "last_change": "2010-08-11T09:58:36"
+    },
+    {
+      "user_id": "33474",
+      "access_change_count": 134,
+      "add_count": 131,
+      "remove_count": 3,
+      "unique_targets": 22,
+      "first_change": "2005-04-04T17:47:20",
+      "last_change": "2010-08-31T13:54:34"
+    },
+    {
+      "user_id": "33479",
+      "access_change_count": 2,
+      "add_count": 2,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2006-08-04T12:00:21",
+      "last_change": "2009-10-21T18:48:37"
+    },
+    {
+      "user_id": "33480",
+      "access_change_count": 3,
+      "add_count": 2,
+      "remove_count": 1,
+      "unique_targets": 1,
+      "first_change": "2009-11-29T20:01:17",
+      "last_change": "2010-02-15T10:04:09"
+    },
+    {
+      "user_id": "33483",
+      "access_change_count": 73,
+      "add_count": 72,
+      "remove_count": 1,
+      "unique_targets": 13,
+      "first_change": "2008-04-21T02:13:40",
+      "last_change": "2010-08-28T10:09:41"
+    },
+    {
+      "user_id": "33487",
+      "access_change_count": 11,
+      "add_count": 11,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2005-11-04T17:14:16",
+      "last_change": "2010-06-09T10:43:20"
+    },
+    {
+      "user_id": "33515",
+      "access_change_count": 37,
+      "add_count": 35,
+      "remove_count": 2,
+      "unique_targets": 8,
+      "first_change": "2008-08-18T15:17:54",
+      "last_change": "2010-08-30T14:53:51"
+    },
+    {
+      "user_id": "33519",
+      "access_change_count": 69,
+      "add_count": 67,
+      "remove_count": 2,
+      "unique_targets": 14,
+      "first_change": "2009-02-12T12:48:32",
+      "last_change": "2010-08-29T09:21:34"
+    },
+    {
+      "user_id": "33527",
+      "access_change_count": 177,
+      "add_count": 175,
+      "remove_count": 2,
+      "unique_targets": 28,
+      "first_change": "2006-05-04T20:25:21",
+      "last_change": "2010-08-24T14:57:02"
+    },
+    {
+      "user_id": "33534",
+      "access_change_count": 219,
+      "add_count": 219,
+      "remove_count": 0,
+      "unique_targets": 31,
+      "first_change": "2008-07-16T01:22:14",
+      "last_change": "2010-08-31T14:45:03"
+    },
+    {
+      "user_id": "33539",
+      "access_change_count": 2,
+      "add_count": 2,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2007-09-24T10:15:40",
+      "last_change": "2009-10-14T16:47:36"
+    },
+    {
+      "user_id": "33551",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2010-08-25T07:20:12",
+      "last_change": "2010-08-25T10:12:28"
+    },
+    {
+      "user_id": "33562",
+      "access_change_count": 1,
+      "add_count": 1,
+      "remove_count": 0,
+      "unique_targets": 1,
+      "first_change": "2009-10-23T22:40:28",
+      "last_change": "2009-10-23T22:40:28"
+    },
+    {
+      "user_id": "33563",
+      "access_change_count": 1,
+      "add_count": 1,
+      "remove_count": 0,
+      "unique_targets": 1,
+      "first_change": "2010-03-24T13:06:05",
+      "last_change": "2010-03-24T13:06:05"
+    },
+    {
+      "user_id": "33574",
+      "access_change_count": 2,
+      "add_count": 2,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2006-11-06T05:21:08",
+      "last_change": "2009-10-14T17:10:32"
+    },
+    {
+      "user_id": "33576",
+      "access_change_count": 2,
+      "add_count": 2,
+      "remove_count": 0,
+      "unique_targets": 2,
+      "first_change": "2008-04-14T13:15:08",
+      "last_change": "2009-10-14T09:42:26"
+    },
+    {
+      "user_id": "33578",
+      "access_change_count": 1,
+      "add_count": 1,
+      "remove_count": 0,
+      "unique_targets": 1,
+      "first_change": "2009-10-31T10:44:46",
+      "last_change": "2009-10-31T10:44:46"
+    },
+    {
+      "user_id": "33580",
+      "access_change_count": 24,
+      "add_count": 24,
+      "remove_count": 0,
+      "unique_targets": 9,
+      "first_change": "2006-10-13T13:21:09",
+      "last_change": "2010-08-30T15:25:13"
+    },
+    {
+      "user_id": "33591",
+      "access_change_count": 35,
+      "add_count": 35,
+      "remove_count": 0,
+      "unique_targets": 5,
+      "first_change": "2007-07-23T15:11:59",
+      "last_change": "2010-08-17T08:31:34"
+    },
+    {
+      "user_id": "33619",
+      "access_change_count": 117,
+      "add_count": 117,
+      "remove_count": 0,
+      "unique_targets": 16,
+      "first_change": "2005-06-01T17:26:15",
+      "last_change": "2010-08-31T12:06:00"
+    },
+    {
+      "user_id": "33623",
+      "access_change_count": 59,
+      "add_count": 57,
+      "remove_count": 2,
+      "unique_targets": 7,
+      "first_change": "2006-12-04T16:19:28",
+      "last_change": "2010-07-26T11:55:26"
+    },
+    {
+      "user_id": "33629",
+      "access_change_count": 3,
+      "add_count": 3,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2009-09-24T06:41:08",
+      "last_change": "2009-10-16T11:23:55"
+    },
+    {
+      "user_id": "33635",
+      "access_change_count": 9,
+      "add_count": 9,
+      "remove_count": 0,
+      "unique_targets": 7,
+      "first_change": "2006-07-13T16:00:20",
+      "last_change": "2010-08-08T18:02:14"
+    },
+    {
+      "user_id": "33639",
+      "access_change_count": 12,
+      "add_count": 12,
+      "remove_count": 0,
+      "unique_targets": 4,
+      "first_change": "2005-11-04T17:14:10",
+      "last_change": "2009-12-20T09:39:06"
+    },
+    {
+      "user_id": "33647",
+      "access_change_count": 11,
+      "add_count": 11,
+      "remove_count": 0,
+      "unique_targets": 3,
+      "first_change": "2005-10-22T15:49:27",
+      "last_change": "2009-10-14T09:48:25"
+    },
+    {
+      "user_id": "33650",
+      "access_change_count": 17,
+      "add_count": 17,
+      "remove_count": 0,
+      "unique_targets": 4,
+      "first_change": "2007-10-18T02:05:56",
+      "last_change": "2010-07-26T08:19:50"
+    },
+    {
+      "user_id": "33654",
+      "access_change_count": 278,
+      "add_count": 276,
+      "remove_count": 2,
+      "unique_targets": 24,
+      "first_change": "2005-05-11T13:03:17",
+      "last_change": "2010-08-29T17:29:28"
+    },
+    {
+      "user_id": "33658",
+      "access_change_count": 39,
+      "add_count": 39,
+      "remove_count": 0,
+      "unique_targets": 13,
+      "first_change": "2007-11-19T10:19:20",
+      "last_change": "2010-08-30T10:20:18"
+    },
+    {
+      "user_id": "33661",
+      "access_change_count": 1,
+      "add_count": 1,
+      "remove_count": 0,
+      "unique_targets": 1,
+      "first_change": "2010-04-27T01:06:48",
+      "last_change": "2010-04-27T01:06:48"
+    },
+    {
+      "user_id": "33664",
+      "access_change_count": 248,
+      "add_count": 248,
+      "remove_count": 0,
+      "unique_targets": 33,
+      "first_change": "2005-04-07T17:16:09",
+      "last_change": "2010-08-31T14:45:03"
+    }
+  ],
+  "limits": [
+    "History records are actual enterprise access changes, not ERP transactions or authentication events.",
+    "The 4.8 GB wide access snapshot is not expanded or falsely reported as processed.",
+    "Target IDs keep the source identifiers; no business semantics or HR fields are invented.",
+    "The model runs on published historical outcomes and never changes benchmark policy or AWS IAM."
+  ]
+}
