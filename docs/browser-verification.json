@@ -1,7 +1,12 @@
 {
   "local": {
     "login": false,
-    "browser_s3_upload": false,
+    "browser_s3_upload": null,
+    "read_only_frontend_check": true,
+    "dedicated_view_navigation": true,
+    "mobile_navigation": true,
+    "keyboard_safe_mobile_sidebar": true,
+    "source_based_wsc_chart": true,
     "measured_data_visible": true,
     "catalog_pagination": true,
     "role_evidence": true,
@@ -11,7 +16,12 @@
   },
   "aws": {
     "login": true,
-    "browser_s3_upload": true,
+    "browser_s3_upload": null,
+    "read_only_frontend_check": true,
+    "dedicated_view_navigation": true,
+    "mobile_navigation": true,
+    "keyboard_safe_mobile_sidebar": true,
+    "source_based_wsc_chart": true,
     "measured_data_visible": true,
     "catalog_pagination": true,
     "role_evidence": true,

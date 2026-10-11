@@ -1,28 +1,1203 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1220"><title>IEAI-ALP | Access Intelligence</title><link rel="stylesheet" href="/static/style.css"></head>
-<body>
-<aside class="sidebar"><div class="brand"><span class="brandmark">IA</span><div><b>IEAI-ALP</b><small>ACCESS INTELLIGENCE</small></div></div>
-<nav><a href="#overview">Overview</a><a href="#roles">Roles &amp; permissions</a><a href="#risk">Risk analysis</a><a href="#ai">Adaptive review &amp; RL</a><a href="#governance">Authorization &amp; audit</a><a href="#dataset">Data provenance</a></nav><div class="side-foot"></div></aside>
-<main id="overview"><header><div><p class="eyebrow">IDENTITY GOVERNANCE / RESEARCH CONSOLE</p><h1>Access intelligence</h1><p class="sub">Computed roles, explainable review, and auditable permission changes</p></div><div class="toolbar"><button id="modeSwitch" class="btn ghost" hidden></button><button id="loginOpen" class="btn ghost" hidden>Sign in</button><button id="refresh" class="btn ghost">Refresh</button><button id="importOpen" class="btn primary">Import dataset</button></div></header>
-<div id="notice" class="error card panel" role="alert" hidden></div>
-<div id="empty" class="empty card"><h2>Start with a real access-control dataset</h2><p>Import source data to compute results, or sign in to view the private AWS datasets. No example records or metrics are seeded.</p><button class="btn primary" id="emptyImport">Import source CSV</button><div class="schema">CSV: <code>user_id,permission_id</code> · UTF-8 · max 25 MiB / 500,000 distinct grants</div></div>
-<div id="appView" hidden>
-<section class="dataset-strip card"><div><span class="eyebrow">ACTIVE DATASET</span><b id="dsName"></b><small id="dsMeta"></small></div><div class="toolbar"><select id="datasetSelect" aria-label="Select dataset"></select><button id="export" class="btn ghost">Export policy &amp; evidence</button><button id="switchImport" class="btn ghost">Import another</button></div></section>
-<section class="metrics"><article class="metric card"><span>USERS</span><b id="mUsers"></b><small>Known source subjects</small></article><article class="metric card"><span>PERMISSIONS</span><b id="mPerms"></b><small>Known source labels</small></article><article class="metric card"><span>ACTIVE ASSIGNMENTS</span><b id="mEdges"></b><small>Effective authorization edges</small></article><article class="metric card"><span>MINED ROLES</span><b id="mRoles"></b><small>Exact reconstruction verified</small></article></section>
-<section class="grid2"><article class="card panel"><div class="panel-head"><div><h2>Policy optimization</h2><p>Greedy shared-permission factoring with measured WSC</p></div><span id="integrity" class="tag green"></span></div><div class="compare"><div><small>DIRECT-ACL BASELINE WSC</small><b id="wBase"></b></div><div class="arrow">→</div><div><small>SELECTED WSC</small><b id="wOpt"></b></div><div class="saving"><b id="saving"></b><small>WSC reduction</small></div></div><div class="formula">WSC = |R| + |UA| + |PA| · effective-policy coverage <b id="coverage"></b></div><div class="bar"><i id="bar"></i></div><p id="computeTime" class="muted tiny"></p><p class="muted tiny">Coverage is measured against the active policy. Approved removals are deliberate policy changes; they are not optimization savings.</p></article>
-<article class="card panel"><div class="panel-head"><div><h2>Risk signal distribution</h2><p>Observed grant rarity and permission density</p></div></div><div class="risk-summary"><div class="donut" id="donut"><b id="riskCount"></b><small>findings</small></div><div class="legend"><span><i class="dot red"></i>High <b id="highRisk"></b></span><span><i class="dot amber"></i>Medium <b id="medRisk"></b></span><span><i class="dot blue"></i>Review <b id="lowRisk"></b></span></div></div><p class="muted tiny">Statistical review signals; no threat labels or business impact inferred.</p></article></section>
-<section class="grid2" id="roles"><article class="card panel"><div class="panel-head"><div><h2>Discovered roles</h2><p>Select a role to inspect its actual members and permissions.</p></div></div><input id="rolesSearch" placeholder="Search role ID" aria-label="Search roles"><div class="table-wrap"><table><thead><tr><th>Role</th><th>Members</th><th>Permissions</th><th>Reconstruction</th></tr></thead><tbody id="rolesBody"></tbody></table></div><div class="pagination"><button id="rolesPrev" class="btn ghost">Previous</button><span id="rolesPage"></span><button id="rolesNext" class="btn ghost">Next</button></div></article>
-<article class="card panel" id="risk"><div class="panel-head"><div><h2>Priority findings</h2><p>Highest ranked 25 users; full findings are in the evidence export.</p></div></div><div id="findings" class="findings"></div></article></section>
-<section class="grid2"><article class="card panel"><div class="panel-head"><div><h2>User profiles</h2><p>ACL structure only; identities and HR attributes are not inferred.</p></div></div><input id="profilesSearch" placeholder="Search source user ID" aria-label="Search profiles"><div class="table-wrap"><table><thead><tr><th>User</th><th>Grants</th><th>Density</th><th>Rare grants</th></tr></thead><tbody id="profilesBody"></tbody></table></div><div class="pagination"><button id="profilesPrev" class="btn ghost">Previous</button><span id="profilesPage"></span><button id="profilesNext" class="btn ghost">Next</button></div></article>
-<article class="card panel"><div class="panel-head"><div><h2>Permission catalog</h2><p>Actual source labels and measured user support</p></div></div><input id="permission_catalogSearch" placeholder="Search permission ID" aria-label="Search permissions"><div class="table-wrap"><table><thead><tr><th>Permission</th><th>Users</th><th>Support</th></tr></thead><tbody id="permissionsBody"></tbody></table></div><div class="pagination"><button id="permission_catalogPrev" class="btn ghost">Previous</button><span id="permission_catalogPage"></span><button id="permission_catalogNext" class="btn ghost">Next</button></div></article></section>
-<section class="card panel" id="ai"><div class="panel-head"><div><h2>Adaptive permission review &amp; learning</h2><p>Review observed rare grants. Approve removal or retain; removed grants can be restored.</p></div><button class="btn ghost" id="train">Train from real reviews</button></div><p class="muted tiny">Offline terminal Q-learning requires at least 5 real reviews across 2 users. It recommends actions and always requires approval. Validation operations are excluded from learning.</p><div id="recommendations" class="findings"></div><div class="pagination"><button id="reviewPrev" class="btn ghost">Previous</button><span id="reviewPage"></span><button id="reviewNext" class="btn ghost">Next</button></div><div id="rlResult" class="rl-result" role="status" hidden></div></section>
-<section class="grid2" id="governance"><article class="card panel"><div class="panel-head"><div><h2>Application authorization check</h2><p>Check an actual source user/permission pair against mined roles.</p></div></div><form id="authorizationForm"><label>User ID<input name="user_id" required placeholder="Source user ID"></label><label>Permission ID<input name="permission_id" required placeholder="Source permission ID"></label><button class="btn primary">Check current policy</button></form><p id="authResult" role="status"></p></article><article class="card panel"><div class="panel-head"><div><h2>Policy versions</h2><p>Every effective change has a parent version and recorded actor.</p></div></div><div class="table-wrap"><table><thead><tr><th>Version</th><th>Actor</th><th>Change</th></tr></thead><tbody id="versionsBody"></tbody></table></div></article></section>
-<section class="card panel"><div class="panel-head"><div><h2>Audit history</h2><p>Latest 25 events; full version evidence is included in exports.</p></div></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Actor</th></tr></thead><tbody id="auditBody"></tbody></table></div></section>
-<section class="card panel" id="temporal"><div class="panel-head"><div><h2>Enterprise access-change experiment</h2><p>Amazon Access Samples ? separate population and chronological RL evaluation</p></div><button id="historyExport" class="btn ghost">Export historical model</button></div><div id="historySummary" class="method">Loading measured history results?</div><p class="muted tiny">The learning outcome is recorded authorization delay. Action agreement is not a threat accuracy or safety score. Historical actions never change the active benchmark policy.</p></section>
-<section class="card panel" id="dataset"><div class="panel-head"><div><h2>Dataset provenance</h2><p>Immutable source hash and computed analysis metadata</p></div></div><div class="provenance"><span>Source</span><b id="source"></b><span>License / usage note</span><b id="license"></b><span>SHA-256</span><code id="hash"></code><span>Imported</span><b id="date"></b><span>Analysis run</span><code id="runid"></code></div><div class="method" id="method"></div></section>
-</div><footer>IEAI-ALP · Research application · <span id="status">Connecting…</span></footer></main>
-<dialog id="importDialog"><form id="uploadForm"><div class="dialog-head"><h2>Import access matrix</h2><button type="button" class="close" id="closeDialog" aria-label="Close">×</button></div><p class="muted">Use genuine, traceable ACL data. AWS mode stores the source in private S3 and runs Lambda analysis. Local mode stores it on this computer.</p><label>Dataset name<input name="name" required maxlength="200"></label><label>Source URL<input name="source_url" type="url" required maxlength="512"></label><label>License / usage note<input name="license_note" required maxlength="512"></label><label>CSV file<input name="file" type="file" accept=".csv,text/csv" required></label><div class="schema">Columns: <code>user_id,permission_id</code> · max 25 MiB. AWS metadata must be single-line ASCII.</div><p class="error" id="uploadError" role="alert"></p><button class="btn primary full" type="submit">Import and analyze</button></form></dialog>
-<dialog id="loginDialog"><form id="loginForm"><div class="dialog-head"><h2>Administrator sign in</h2><button type="button" class="close" id="closeLogin" aria-label="Close">×</button></div><label>Email or username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><label id="newPasswordRow" hidden>New permanent password<input name="new_password" type="password" autocomplete="new-password" minlength="12"></label><p class="error" id="loginError" role="alert"></p><button class="btn primary full">Sign in</button></form></dialog>
-<dialog id="roleDialog"><div class="dialog-head"><h2>Role evidence</h2><button id="closeRole" class="close" aria-label="Close">×</button></div><pre id="roleDetail"></pre></dialog>
-<script src="/static/config.js"></script><script src="/static/app.js"></script></body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101d29" />
+    <meta
+      name="description"
+      content="IEAI-ALP access governance workspace. Analyze source-backed permissions, inspect roles and review auditable policy changes."
+    />
+    <title>IEAI-ALP | Access Intelligence</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="icon-sprite"
+      aria-hidden="true"
+    >
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3 20 6v6c0 4-5 7-8 9-3-2-8-5-8-9V6z" />
+        <path d="m8 12 3 3 5-6" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="2" />
+        <rect x="14" y="3" width="7" height="7" rx="2" />
+        <rect x="3" y="14" width="7" height="7" rx="2" />
+        <rect x="14" y="14" width="7" height="7" rx="2" />
+      </symbol>
+      <symbol id="i-roles" viewBox="0 0 24 24">
+        <circle cx="12" cy="5" r="2" />
+        <circle cx="5" cy="18" r="2" />
+        <circle cx="19" cy="18" r="2" />
+        <path d="M12 7v5M5 16v-4h14v4" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="9" cy="8" r="3" />
+        <path
+          d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 4v2"
+        />
+      </symbol>
+      <symbol id="i-key" viewBox="0 0 24 24">
+        <circle cx="8" cy="9" r="5" />
+        <path d="m12 13 8 8 2-2-3-3 2-2-3-3" />
+      </symbol>
+      <symbol id="i-risk" viewBox="0 0 24 24">
+        <path d="m12 3 10 18H2zM12 9v5" />
+        <circle cx="12" cy="17" r=".5" />
+      </symbol>
+      <symbol id="i-audit" viewBox="0 0 24 24">
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <path d="M9 7h6m-6 4h6m-6 4h3" />
+      </symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24">
+        <path
+          d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5zM20 3v4m-2-2h4"
+        />
+      </symbol>
+      <symbol id="i-data" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="5" rx="8" ry="3" />
+        <path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0" />
+      </symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24">
+        <path d="M6 18a5 5 0 1 1 0-10 7 7 0 0 1 13-1 5.5 5.5 0 0 1-1 11z" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path
+          d="M20 8a8 8 0 0 0-14-3L3 8m0-5v5h5m-4 8a8 8 0 0 0 14 3l3-3m0 5v-5h-5"
+        />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M4 12h16m-6-6 6 6-6 6" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10" cy="10" r="6" />
+        <path d="m15 15 6 6" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M6 18 18 6" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12" height="13" rx="2" />
+        <path d="M15 8V3H3v12h5" />
+      </symbol>
+      <symbol id="i-sign" viewBox="0 0 24 24">
+        <path d="M13 4H4v16h9m-3-8h11m-4-4 4 4-4 4" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24">
+        <path d="M4 3v18h17M8 16v-4m5 4V8m5 8V5" />
+      </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="m9 5 7 7-7 7" />
+      </symbol>
+    </svg>
+    <a class="skip-link" href="#mainContent">Skip to workspace</a>
+    <div class="nav-scrim" id="navScrim" hidden></div>
+    <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="#overview"
+        ><span class="brandmark"
+          ><svg class="icon" aria-hidden="true">
+            <use href="#i-shield" /></svg></span
+        ><span
+          ><b>IEAI<span class="brand-dash"> / </span>ALP</b
+          ><small>ACCESS INTELLIGENCE</small></span
+        ></a
+      >
+      <div class="workspace-label">
+        <span class="workspace-avatar">IA</span>
+        <div><b>Access governance</b><small>Research workspace</small></div>
+        <span class="workspace-dot"></span>
+      </div>
+      <p class="nav-label">WORKSPACE</p>
+      <nav>
+        <a
+          href="#overview"
+          data-view="overview"
+          class="active"
+          aria-current="page"
+          ><svg class="icon" aria-hidden="true"><use href="#i-grid" /></svg
+          ><span>Overview</span><span class="nav-active-dot"></span></a
+        ><a href="#roles" data-view="roles" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-roles" /></svg
+          ><span>Role catalog</span></a
+        ><a href="#profiles" data-view="profiles" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-users" /></svg
+          ><span>Users & permissions</span></a
+        ><a href="#risk" data-view="risk" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-risk" /></svg
+          ><span>Risk & review</span></a
+        ><a href="#governance" data-view="governance" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-audit" /></svg
+          ><span>Policy & audit</span></a
+        ><a href="#temporal" data-view="temporal" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-spark" /></svg
+          ><span>Learning lab</span></a
+        ><a href="#dataset" data-view="dataset" class=""
+          ><svg class="icon" aria-hidden="true"><use href="#i-data" /></svg
+          ><span>Data provenance</span></a
+        >
+      </nav>
+      <div class="sidebar-note">
+        <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg
+        ><b>Evidence before action.</b>
+        <p>Inspect the source. Review the change. Keep the audit trail.</p>
+        <a href="#dataset" data-view="dataset"
+          >Explore provenance
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
+        ></a>
+      </div>
+      <div class="side-foot">
+        <span class="backend-icon"
+          ><svg class="icon" aria-hidden="true"><use href="#i-cloud" /></svg
+        ></span>
+        <div>
+          <b id="backendName">Connecting</b
+          ><small id="backendCaption">Checking workspace</small>
+        </div>
+        <span class="connection-dot" id="sideConnection"></span>
+      </div>
+    </aside>
+    <div class="app-shell">
+      <div class="topbar">
+        <div class="breadcrumb">
+          <button
+            class="icon-btn mobile-menu"
+            id="menuOpen"
+            aria-label="Open navigation"
+            aria-expanded="false"
+            aria-controls="sidebar"
+          >
+            <svg class="icon" aria-hidden="true">
+              <use href="#i-menu" />
+            </svg></button
+          ><span class="breadcrumb-brand">Workspace</span
+          ><svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg
+          ><span id="breadcrumbView">Overview</span>
+        </div>
+        <div class="topbar-actions">
+          <span class="connection-pill" id="connectionPill"
+            ><i></i><span id="connectionLabel">Connecting</span></span
+          ><button id="modeSwitch" class="btn quiet" hidden></button
+          ><button id="loginOpen" class="btn dark" hidden>Sign in</button>
+        </div>
+      </div>
+      <main id="mainContent">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow" id="viewEyebrow">IDENTITY GOVERNANCE</p>
+            <h1 id="viewTitle">
+              Access overview<span class="heading-dot">.</span>
+            </h1>
+            <p class="sub" id="viewDescription">
+              A clearer view of who can access what.
+            </p>
+          </div>
+          <div class="toolbar">
+            <button id="refresh" class="btn secondary">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-refresh" />
+              </svg>
+              Refresh</button
+            ><button id="importOpen" class="btn primary">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-upload" />
+              </svg>
+              Import dataset
+            </button>
+          </div>
+        </header>
+        <div id="notice" class="notice" role="alert" hidden></div>
+        <div id="empty" class="empty card">
+          <div class="welcome-copy">
+            <span class="badge neutral"
+              ><svg class="icon" aria-hidden="true">
+                <use href="#i-shield" />
+              </svg>
+              ACCESS GOVERNANCE WORKSPACE</span
+            >
+            <h2>Every permission.<br /><span>A clearer purpose.</span></h2>
+            <p>
+              Turn genuine access records into inspectable roles, evidence-based
+              reviews, and an auditable policy.
+            </p>
+            <div class="welcome-actions">
+              <button class="btn primary" id="emptyImport">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-upload" />
+                </svg>
+                Import source data</button
+              ><button class="btn secondary" id="emptySignIn" hidden>
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-sign" />
+                </svg>
+                Sign in to AWS
+              </button>
+            </div>
+            <p class="welcome-note" id="emptyHint">
+              Import a source CSV to begin your analysis.
+            </p>
+          </div>
+          <div class="welcome-workflow">
+            <div class="workflow-row">
+              <span>01</span>
+              <div>
+                <b>Connect the evidence</b
+                ><small>Source records with a recorded file hash</small>
+              </div>
+              <svg class="icon" aria-hidden="true"><use href="#i-data" /></svg>
+            </div>
+            <div class="workflow-row">
+              <span>02</span>
+              <div>
+                <b>Discover the structure</b
+                ><small>Inspect roles, coverage, and permission risk</small>
+              </div>
+              <svg class="icon" aria-hidden="true"><use href="#i-roles" /></svg>
+            </div>
+            <div class="workflow-row">
+              <span>03</span>
+              <div>
+                <b>Make a reviewed change</b
+                ><small>Approve, restore, and track policy versions</small>
+              </div>
+              <svg class="icon" aria-hidden="true"><use href="#i-audit" /></svg>
+            </div>
+            <div class="schema">
+              CSV columns <code>user_id,permission_id</code><br />UTF-8 · 25 MiB
+              maximum
+            </div>
+          </div>
+        </div>
+        <div id="appView" hidden>
+          <section class="dataset-strip">
+            <div class="dataset-identity">
+              <span class="dataset-icon"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-data" /></svg
+              ></span>
+              <div>
+                <small>SELECTED SOURCE</small><b id="dsName"></b
+                ><span id="dsMeta"></span>
+              </div>
+            </div>
+            <div class="dataset-actions">
+              <span class="version-pill" id="versionBadge"></span
+              ><select id="datasetSelect" aria-label="Select dataset"></select
+              ><button
+                id="export"
+                class="icon-btn"
+                aria-label="Export policy and evidence"
+                title="Export policy and evidence"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-download" />
+                </svg></button
+              ><button
+                id="switchImport"
+                class="icon-btn"
+                aria-label="Import another dataset"
+                title="Import another dataset"
+              >
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-upload" />
+                </svg>
+              </button>
+            </div>
+          </section>
+          <section
+            class="workspace-view"
+            id="overview"
+            data-workspace-view="overview"
+          >
+            <div class="overview-intro">
+              <div>
+                <span class="section-kicker">THE POLICY AT A GLANCE</span>
+                <h2>From access records to actionable clarity.</h2>
+              </div>
+              <span class="badge neutral"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-data" />
+                </svg>
+                Computed from the selected source</span
+              >
+            </div>
+            <div class="metrics">
+              <article class="metric card">
+                <div class="metric-head">
+                  <span>Source users</span
+                  ><span class="metric-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-users" /></svg
+                  ></span>
+                </div>
+                <b id="mUsers"></b>
+                <div class="metric-foot">
+                  <span>Observed subjects</span
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" />
+                  </svg>
+                </div>
+              </article>
+              <article class="metric card">
+                <div class="metric-head">
+                  <span>Permissions</span
+                  ><span class="metric-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-key" /></svg
+                  ></span>
+                </div>
+                <b id="mPerms"></b>
+                <div class="metric-foot">
+                  <span>Source permission labels</span
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" />
+                  </svg>
+                </div>
+              </article>
+              <article class="metric card">
+                <div class="metric-head">
+                  <span>Active grants</span
+                  ><span class="metric-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-shield" /></svg
+                  ></span>
+                </div>
+                <b id="mEdges"></b>
+                <div class="metric-foot">
+                  <span>Effective authorization edges</span
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" />
+                  </svg>
+                </div>
+              </article>
+              <article class="metric card">
+                <div class="metric-head">
+                  <span>Discovered roles</span
+                  ><span class="metric-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-roles" /></svg
+                  ></span>
+                </div>
+                <b id="mRoles"></b>
+                <div class="metric-foot">
+                  <span>Exact access reconstruction</span
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" />
+                  </svg>
+                </div>
+              </article>
+            </div>
+            <div class="grid2 insight-grid">
+              <article class="card panel optimization-panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-chart" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">POLICY EFFICIENCY</p>
+                      <h2>A smaller policy footprint</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Measured structural cost. Full access reconstruction.
+                </p>
+                <div class="optimization-headline">
+                  <b id="saving"></b>
+                  <div>
+                    <strong>lower structural cost</strong
+                    ><span>Compared with the direct-ACL baseline</span>
+                  </div>
+                  <span class="badge success" id="integrity"></span>
+                </div>
+                <div class="wsc-chart">
+                  <div class="wsc-row">
+                    <span>Direct ACL</span>
+                    <div class="chart-track">
+                      <i class="chart-fill baseline" id="baseBar"></i>
+                    </div>
+                    <b id="wBase"></b>
+                  </div>
+                  <div class="wsc-row">
+                    <span>Access cohorts</span>
+                    <div class="chart-track">
+                      <i class="chart-fill cohort" id="cohortBar"></i>
+                    </div>
+                    <b id="wCohort"></b>
+                  </div>
+                  <div class="wsc-row">
+                    <span>Selected policy</span>
+                    <div class="chart-track">
+                      <i class="chart-fill selected" id="selectedBar"></i>
+                    </div>
+                    <b id="wOpt"></b>
+                  </div>
+                </div>
+                <div class="optimization-footer">
+                  <span>Effective-policy coverage <b id="coverage"></b></span
+                  ><span id="computeTime"></span>
+                </div>
+                <p class="help-note">
+                  Structural cost = roles + user-role edges + role-permission
+                  edges. Coverage is checked against the effective policy.
+                </p>
+                <div class="bar" hidden><i id="bar"></i></div>
+              </article>
+              <article class="card panel risk-panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-risk" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">REVIEW SIGNALS</p>
+                      <h2>Where to focus next</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Grant rarity and permission density in this source.
+                </p>
+                <div class="risk-summary">
+                  <div class="donut" id="donut">
+                    <b id="riskCount"></b><small>users to review</small>
+                  </div>
+                  <div class="legend">
+                    <span
+                      ><i class="dot red"></i>High priority
+                      <b id="highRisk"></b></span
+                    ><span
+                      ><i class="dot amber"></i>Medium priority
+                      <b id="medRisk"></b></span
+                    ><span
+                      ><i class="dot blue"></i>Review <b id="lowRisk"></b
+                    ></span>
+                  </div>
+                </div>
+                <a class="panel-link" href="#risk" data-view="risk"
+                  >Open the review workspace
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" /></svg
+                ></a>
+                <p class="help-note">
+                  Statistical signals help prioritize review. They are not
+                  confirmed threats.
+                </p>
+              </article>
+            </div>
+            <div class="overview-bottom">
+              <article class="overview-action card">
+                <span class="action-icon"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-roles" /></svg
+                ></span>
+                <div>
+                  <h3>Explore the role structure</h3>
+                  <p>Inspect actual members and permissions.</p>
+                </div>
+                <a
+                  class="icon-btn"
+                  href="#roles"
+                  data-view="roles"
+                  aria-label="Open role catalog"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" /></svg
+                ></a>
+              </article>
+              <article class="overview-action card">
+                <span class="action-icon"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-audit" /></svg
+                ></span>
+                <div>
+                  <h3>Trace every policy change</h3>
+                  <p>Review versions and recorded decisions.</p>
+                </div>
+                <a
+                  class="icon-btn"
+                  href="#governance"
+                  data-view="governance"
+                  aria-label="Open policy and audit"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-arrow" /></svg
+                ></a>
+              </article>
+            </div>
+          </section>
+          <section
+            class="workspace-view"
+            id="roles"
+            data-workspace-view="roles"
+            hidden
+          >
+            <article class="card panel catalog-card">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-roles" /></svg
+                  ></span>
+                  <div>
+                    <p class="eyebrow">ACCESS CATALOG</p>
+                    <h2>The role catalog</h2>
+                  </div>
+                </div>
+              </div>
+              <p class="panel-desc">
+                Open a role to inspect its source members and permission set.
+              </p>
+              <div class="search-field">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-search" /></svg
+                ><input
+                  id="rolesSearch"
+                  placeholder="Search role ID"
+                  aria-label="Search the role catalog"
+                />
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Candidate role</th>
+                      <th>Members</th>
+                      <th>Permissions</th>
+                      <th>Coverage</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rolesBody"></tbody>
+                </table>
+              </div>
+              <div class="pagination">
+                <span id="rolesPage"></span>
+                <div>
+                  <button id="rolesPrev" class="btn quiet">Previous</button
+                  ><button id="rolesNext" class="btn quiet">
+                    Next
+                    <svg class="icon" aria-hidden="true">
+                      <use href="#i-chevron" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </section>
+          <section
+            class="workspace-view"
+            id="profiles"
+            data-workspace-view="profiles"
+            hidden
+          >
+            <div class="grid2 catalog-grid">
+              <article class="card panel catalog-card">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-users" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">ACCESS CATALOG</p>
+                      <h2>User profiles</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Grant structure and measured rarity, using the source
+                  identifiers.
+                </p>
+                <div class="search-field">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-search" /></svg
+                  ><input
+                    id="profilesSearch"
+                    placeholder="Search user ID"
+                    aria-label="Search user profiles"
+                  />
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Grants</th>
+                        <th>Density</th>
+                        <th>Rare grants</th>
+                      </tr>
+                    </thead>
+                    <tbody id="profilesBody"></tbody>
+                  </table>
+                </div>
+                <div class="pagination">
+                  <span id="profilesPage"></span>
+                  <div>
+                    <button id="profilesPrev" class="btn quiet">Previous</button
+                    ><button id="profilesNext" class="btn quiet">
+                      Next
+                      <svg class="icon" aria-hidden="true">
+                        <use href="#i-chevron" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+              <article class="card panel catalog-card">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-key" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">ACCESS CATALOG</p>
+                      <h2>Permission catalog</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Actual permission labels and their support across source
+                  users.
+                </p>
+                <div class="search-field">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-search" /></svg
+                  ><input
+                    id="permission_catalogSearch"
+                    placeholder="Search permission ID"
+                    aria-label="Search permission catalog"
+                  />
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Permission</th>
+                        <th>Users</th>
+                        <th>User support</th>
+                      </tr>
+                    </thead>
+                    <tbody id="permissionsBody"></tbody>
+                  </table>
+                </div>
+                <div class="pagination">
+                  <span id="permission_catalogPage"></span>
+                  <div>
+                    <button id="permission_catalogPrev" class="btn quiet">
+                      Previous</button
+                    ><button id="permission_catalogNext" class="btn quiet">
+                      Next
+                      <svg class="icon" aria-hidden="true">
+                        <use href="#i-chevron" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <p class="help-note">
+              These profiles describe the access matrix. HR attributes and
+              temporal behavior are not inferred from missing data.
+            </p>
+          </section>
+          <section
+            class="workspace-view"
+            id="risk"
+            data-workspace-view="risk"
+            hidden
+          >
+            <div class="grid2 review-grid">
+              <article class="card panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-risk" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">PRIORITIZED EVIDENCE</p>
+                      <h2>Review signals</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Highest-ranked 25 source users. Full findings are available in
+                  the evidence export.
+                </p>
+                <div id="findings" class="findings priority-findings"></div>
+              </article>
+              <article class="card panel" id="ai">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-shield" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">HUMAN APPROVAL</p>
+                      <h2>Permission review queue</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Retain a grant, approve its removal, or restore a previous
+                  removal.
+                </p>
+                <div class="review-note">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-shield" />
+                  </svg>
+                  Changes apply to the application policy and preserve the
+                  original source.
+                </div>
+                <div
+                  id="recommendations"
+                  class="findings review-findings"
+                ></div>
+                <div class="pagination">
+                  <span id="reviewPage"></span>
+                  <div>
+                    <button id="reviewPrev" class="btn quiet">Previous</button
+                    ><button id="reviewNext" class="btn quiet">
+                      Next
+                      <svg class="icon" aria-hidden="true">
+                        <use href="#i-chevron" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+          <section
+            class="workspace-view"
+            id="governance"
+            data-workspace-view="governance"
+            hidden
+          >
+            <div class="grid2 governance-grid">
+              <article class="card panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-shield" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">POLICY ENFORCEMENT</p>
+                      <h2>Check an authorization</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Evaluate an actual user-permission pair against the current
+                  mined roles.
+                </p>
+                <form id="authorizationForm">
+                  <label
+                    >User ID<input
+                      name="user_id"
+                      required
+                      placeholder="Enter a source user ID" /></label
+                  ><label
+                    >Permission ID<input
+                      name="permission_id"
+                      required
+                      placeholder="Enter a source permission ID" /></label
+                  ><button class="btn primary">
+                    <svg class="icon" aria-hidden="true">
+                      <use href="#i-check" />
+                    </svg>
+                    Check current policy
+                  </button>
+                </form>
+                <p
+                  id="authResult"
+                  class="authorization-result"
+                  role="status"
+                ></p>
+              </article>
+              <article class="card panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <span class="panel-icon"
+                      ><svg class="icon" aria-hidden="true">
+                        <use href="#i-clock" /></svg
+                    ></span>
+                    <div>
+                      <p class="eyebrow">VERSION HISTORY</p>
+                      <h2>A policy with a paper trail</h2>
+                    </div>
+                  </div>
+                </div>
+                <p class="panel-desc">
+                  Effective changes have a parent version and a recorded actor.
+                </p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Version</th>
+                        <th>Actor</th>
+                        <th>Recorded change</th>
+                      </tr>
+                    </thead>
+                    <tbody id="versionsBody"></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+            <article class="card panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-audit" /></svg
+                  ></span>
+                  <div>
+                    <p class="eyebrow">ACTIVITY LOG</p>
+                    <h2>Audit history</h2>
+                  </div>
+                </div>
+              </div>
+              <p class="panel-desc">
+                Latest 25 source imports and permission decisions.
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Recorded at</th>
+                      <th>Action</th>
+                      <th>Actor</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="auditBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+          <section
+            class="workspace-view"
+            id="temporal"
+            data-workspace-view="temporal"
+            hidden
+          >
+            <div class="research-banner">
+              <span class="research-mark"
+                ><svg class="icon" aria-hidden="true">
+                  <use href="#i-spark" /></svg
+              ></span>
+              <div>
+                <p class="eyebrow">OBSERVED OUTCOMES · OFFLINE LEARNING</p>
+                <h2>Learn from evidence. Show the limits.</h2>
+                <p>
+                  Two separate experiments. Transparent evaluations. Human
+                  approval.
+                </p>
+              </div>
+            </div>
+            <article class="card panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-chart" /></svg
+                  ></span>
+                  <div>
+                    <p class="eyebrow">AMAZON ACCESS SAMPLES</p>
+                    <h2>Enterprise access-change history</h2>
+                  </div>
+                </div>
+                <button id="historyExport" class="btn secondary">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-download" />
+                  </svg>
+                  Export model
+                </button>
+              </div>
+              <div id="historySummary" class="history-summary">
+                Loading the recorded experiment.
+              </div>
+              <div id="temporalMetrics" class="temporal-metrics" hidden>
+                <div><small>RECORDED CHANGES</small><b id="tEvents"></b></div>
+                <div><small>SOURCE USERS</small><b id="tUsers"></b></div>
+                <div>
+                  <small>TARGET IDENTIFIERS</small><b id="tTargets"></b>
+                </div>
+                <div><small>HELD-OUT EVENTS</small><b id="tHoldout"></b></div>
+              </div>
+              <div id="learningEvaluation" class="learning-evaluation" hidden>
+                <div>
+                  <h3>Recorded-action agreement</h3>
+                  <p>A descriptive comparison, not a safety or threat score.</p>
+                  <div class="evaluation-row">
+                    <span>Learning policy</span>
+                    <div class="chart-track">
+                      <i id="learningBar" class="chart-fill selected"></i>
+                    </div>
+                    <b id="learningAgreement"></b>
+                  </div>
+                  <div class="evaluation-row">
+                    <span>Majority baseline</span>
+                    <div class="chart-track">
+                      <i id="majorityBar" class="chart-fill baseline"></i>
+                    </div>
+                    <b id="majorityAgreement"></b>
+                  </div>
+                </div>
+                <div class="evaluation-note">
+                  <span id="modelComparison" class="badge warning"></span>
+                  <p id="temporalSplit"></p>
+                  <small
+                    >Recorded authorization delay is the learning outcome.
+                    Historical actions do not change the active policy.</small
+                  >
+                </div>
+              </div>
+            </article>
+            <article class="card panel feedback-panel">
+              <div>
+                <p class="eyebrow">ADMINISTRATOR FEEDBACK</p>
+                <h2>Learning from your real reviews</h2>
+                <p>
+                  Train the feedback model after at least five genuine reviews
+                  across two users. Unseen or ambiguous states require review;
+                  every change still needs approval.
+                </p>
+              </div>
+              <button class="btn dark" id="train">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-spark" />
+                </svg>
+                Train from real reviews
+              </button>
+              <div id="rlResult" class="rl-result" role="status" hidden></div>
+            </article>
+          </section>
+          <section
+            class="workspace-view"
+            id="dataset"
+            data-workspace-view="dataset"
+            hidden
+          >
+            <article class="card panel provenance-panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-icon"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-data" /></svg
+                  ></span>
+                  <div>
+                    <p class="eyebrow">DATA LINEAGE</p>
+                    <h2>Evidence you can trace</h2>
+                  </div>
+                </div>
+              </div>
+              <p class="panel-desc">
+                Source metadata and the immutable file hash behind this
+                analysis.
+              </p>
+              <div class="provenance">
+                <span>Source URL</span><b id="source"></b
+                ><span>License / usage note</span><b id="license"></b
+                ><span>Source SHA-256</span>
+                <div class="hash-field">
+                  <code id="hash"></code
+                  ><button
+                    class="icon-btn"
+                    id="copyHash"
+                    aria-label="Copy source hash"
+                  >
+                    <svg class="icon" aria-hidden="true">
+                      <use href="#i-copy" />
+                    </svg>
+                  </button>
+                </div>
+                <span>Imported</span><b id="date"></b><span>Analysis run</span
+                ><code id="runid"></code>
+              </div>
+              <details class="method-details">
+                <summary>
+                  Analysis method and boundaries
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-chevron" />
+                  </svg>
+                </summary>
+                <div class="method" id="method"></div>
+              </details>
+            </article>
+            <div class="source-note">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-shield" />
+              </svg>
+              Source identities and permission labels are preserved. Unavailable
+              attributes are never invented.
+            </div>
+          </section>
+        </div>
+        <footer>
+          <span>IEAI-ALP <i></i> Access governance research</span
+          ><span id="status" role="status">Connecting to the workspace</span>
+        </footer>
+      </main>
+    </div>
+    <dialog id="importDialog">
+      <form id="uploadForm">
+        <div class="dialog-head">
+          <div>
+            <span class="dialog-mark"
+              ><svg class="icon" aria-hidden="true">
+                <use href="#i-upload" /></svg
+            ></span>
+            <p class="eyebrow">CONNECT THE EVIDENCE</p>
+            <h2>Import an access matrix</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-btn"
+            id="closeDialog"
+            aria-label="Close"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <p class="muted">
+          Choose a genuine source CSV. Its file hash will be recorded with the
+          analysis.
+        </p>
+        <label
+          >Dataset name<input
+            name="name"
+            required
+            maxlength="200"
+            placeholder="Name this source" /></label
+        ><label
+          >Source URL<input
+            name="source_url"
+            type="url"
+            required
+            maxlength="512"
+            placeholder="https://" /></label
+        ><label
+          >License / usage note<input
+            name="license_note"
+            required
+            maxlength="512"
+            placeholder="Source license or permitted use" /></label
+        ><label class="file-field"
+          ><svg class="icon" aria-hidden="true"><use href="#i-upload" /></svg
+          ><span>Choose your source CSV</span
+          ><input name="file" type="file" accept=".csv,text/csv" required
+        /></label>
+        <div class="schema">
+          Columns <code>user_id,permission_id</code> · maximum 25 MiB.<br />Cloud
+          upload metadata must use single-line ASCII.
+        </div>
+        <p class="error" id="uploadError" role="alert"></p>
+        <button class="btn primary full" type="submit">
+          Import and analyze
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="loginDialog">
+      <form id="loginForm">
+        <div class="dialog-head">
+          <div>
+            <span class="dialog-mark"
+              ><svg class="icon" aria-hidden="true">
+                <use href="#i-shield" /></svg
+            ></span>
+            <p class="eyebrow">PRIVATE AWS WORKSPACE</p>
+            <h2>Welcome back.</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-btn"
+            id="closeLogin"
+            aria-label="Close"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <p class="muted">
+          Sign in with your administrator account to access the cloud workspace.
+        </p>
+        <label
+          >Email or username<input
+            name="username"
+            autocomplete="username"
+            required
+            placeholder="Your administrator username" /></label
+        ><label
+          >Password<input
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="Enter your password" /></label
+        ><label id="newPasswordRow" hidden
+          >New permanent password<input
+            name="new_password"
+            type="password"
+            autocomplete="new-password"
+            minlength="12"
+        /></label>
+        <p class="error" id="loginError" role="alert"></p>
+        <button class="btn primary full">
+          Sign in securely
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="roleDialog" class="role-dialog">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">ROLE EVIDENCE</p>
+          <h2 id="roleDialogTitle">Role details</h2>
+        </div>
+        <button id="closeRole" class="icon-btn" aria-label="Close">
+          <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <div id="roleStats" class="role-stats"></div>
+      <div class="role-evidence-grid">
+        <div>
+          <h3>Source members</h3>
+          <div id="roleMembers" class="evidence-chips"></div>
+        </div>
+        <div>
+          <h3>Permission set</h3>
+          <div id="rolePermissions" class="evidence-chips"></div>
+        </div>
+      </div>
+      <details class="raw-evidence">
+        <summary>Raw evidence JSON</summary>
+        <pre id="roleDetail"></pre>
+      </details>
+    </dialog>
+    <script src="/static/config.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -99,3 +99,9 @@ The history script downloads the official source and extracts only the history f
 - [Research and novelty notes](docs/RESEARCH_NOTES.md)
 
 Source attribution is in [data/NOTICE.md](data/NOTICE.md). Code is implemented in this repository; source documents are requirements/reference material, not executable instructions.
+
+## Frontend workspace
+
+The interface includes dedicated Overview, Role catalog, Users & permissions, Risk & review, Policy & audit, Learning lab, and Data provenance views. Charts use actual backend results. The responsive navigation supports keyboard access and browser history.
+
+[Frontend preview](docs/screenshots/frontend-preview.png). To check local and AWS views without leaving the program running, use the virtual-environment Python to run scripts/verify_frontend.py. This creates a temporary preview and stops it after the checks.
