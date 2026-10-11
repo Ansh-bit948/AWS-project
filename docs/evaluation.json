@@ -1,0 +1,77 @@
+{
+  "measured_at_utc": "2026-10-11T13:10:16.444715+00:00",
+  "engine_version": "2.0.0",
+  "host": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.4",
+    "processor": "Intel64 Family 6 Model 154 Stepping 4, GenuineIntel"
+  },
+  "dataset": "Firewall1 variant published by RBAC Maintenance authors",
+  "source_url": "https://onlinerbacfixing.github.io/cybersecurity2019/",
+  "sha256": "cf5434adbbb891ba1ae4c9fb172510b81030d28b91ee4aebac95d64524426c91",
+  "quality": {
+    "sha256": "cf5434adbbb891ba1ae4c9fb172510b81030d28b91ee4aebac95d64524426c91",
+    "input_rows": 31919,
+    "distinct_edges": 31919,
+    "duplicates_removed": 0
+  },
+  "counts": {
+    "users": 365,
+    "permissions": 709,
+    "assignments": 31919,
+    "roles": 132
+  },
+  "baseline": {
+    "roles": 365,
+    "ua_edges": 365,
+    "pa_edges": 31919,
+    "wsc": 32649
+  },
+  "cohort_baseline": {
+    "roles": 116,
+    "wsc": 9787
+  },
+  "optimized": {
+    "roles": 132,
+    "ua_edges": 1506,
+    "pa_edges": 2874,
+    "wsc": 4512,
+    "coverage": 1.0,
+    "permission_loss": 0,
+    "overgrants": 0,
+    "factor_steps": 21,
+    "method": "greedy_support_factor"
+  },
+  "wsc_reduction_percent": 86.1803,
+  "reconstruction": {
+    "missing": 0,
+    "extra": 0
+  },
+  "timing": {
+    "runs": 7,
+    "wall_ms": [
+      114.53169999003876,
+      136.39460000558756,
+      109.29310000210535,
+      92.7594999957364,
+      111.48920000414364,
+      113.66800000541843,
+      123.96319999243133
+    ],
+    "median_ms": 113.66800000541843,
+    "max_ms": 136.39460000558756
+  },
+  "memory": {
+    "tracemalloc_peak_bytes": 8581226,
+    "scope": "Python allocations during compute; excludes interpreter/RSS; separate untimed run"
+  },
+  "rl": {
+    "status": "requires_genuine_feedback",
+    "synthetic_feedback": false
+  },
+  "limits": [
+    "Source is static network ACL data, not ERP usage logs.",
+    "This source variant has 31,919 grants; commonly cited original Firewall1 has 31,951. No correction or invented grant is made.",
+    "Performance is for this host and dataset; no extrapolated throughput or threat accuracy."
+  ]
+}

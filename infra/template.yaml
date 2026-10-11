@@ -37,6 +37,9 @@ Resources:
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
       SSESpecification:
@@ -123,7 +126,7 @@ Resources:
               Resource: !Sub 'arn:${AWS::Partition}:s3:::${AppName}-raw-${AWS::AccountId}-${AWS::Region}/results/*'
         - Statement:
             - Effect: Allow
-              Action: [dynamodb:GetItem, dynamodb:Scan]
+              Action: [dynamodb:GetItem, dynamodb:Scan, dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:TransactWriteItems]
               Resource: !GetAtt ResultsTable.Arn
         - Statement:
             - Effect: Allow
@@ -138,6 +141,16 @@ Resources:
             Method: ANY
             Auth:
               Authorizer: CognitoAuthorizer
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ApiFunction}'
+      RetentionInDays: 7
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProcessDatasetFunction}'
+      RetentionInDays: 7
   CognitoPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -163,6 +176,9 @@ Resources:
   ResearchApi:
     Type: AWS::Serverless::HttpApi
     Properties:
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 5
+        ThrottlingRateLimit: 2
       CorsConfiguration:
         AllowOrigins: [!Ref AllowedOrigin]
         AllowHeaders: [authorization,content-type]

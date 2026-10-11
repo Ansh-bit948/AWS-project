@@ -1,80 +1,122 @@
-"""AWS adapter: authenticated API Gateway routes and S3-triggered dataset runs."""
-import csv, hashlib, io, json, os, urllib.parse, uuid
-from datetime import datetime, timezone
-import boto3
-from boto3.dynamodb.conditions import Key
+"""AWS adapters: authenticated routes and idempotent S3 ingestion."""
+import base64
+import json
+import logging
+import os
+from pathlib import Path
+import sys
+import time
+import types
+import urllib.parse
+import uuid
+from decimal import Decimal
 
-s3=boto3.client('s3'); ddb=boto3.resource('dynamodb')
-table=lambda: ddb.Table(os.environ['RESULTS_TABLE'])
-def stamp(): return datetime.now(timezone.utc).isoformat()
+# SAM's app/ CodeUri places these files at Lambda root; provide the app package.
+if 'app' not in sys.modules and __package__ in (None,''):
+    package = types.ModuleType('app')
+    package.__path__ = [str(Path(__file__).parent)]
+    sys.modules['app'] = package
+from app.cloud_store import CloudStore, s3
+from app.engine import compute
+from app.ingestion import MAX_BYTES, parse_csv
+from app.local_store import stamp
+from app.service import dispatch
 
-def process_s3(event, context):
-    """Triggered by raw/ CSV object creation. Persist source hash and computed evidence."""
-    try:
-        from app.engine import compute
-    except ModuleNotFoundError:
-        # In the Lambda bundle, app/ is the function root and engine.py is top-level.
-        from engine import compute
-    results=[]
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
+def process_s3(event,context):
+    store = CloudStore()
+    results = []
     for record in event.get('Records',[]):
-        bucket=record['s3']['bucket']['name']; key=urllib.parse.unquote_plus(record['s3']['object']['key'])
-        if not key.startswith('raw/') or not key.lower().endswith('.csv'): continue
-        obj=s3.get_object(Bucket=bucket,Key=key); raw=obj['Body'].read()
-        reader=csv.DictReader(io.StringIO(raw.decode('utf-8-sig')))
-        fields={x.strip().lower():x for x in (reader.fieldnames or [])}
-        uc=next((fields[x] for x in ('user_id','user','uid') if x in fields),None)
-        pc=next((fields[x] for x in ('permission_id','permission','resource_id','rid') if x in fields),None)
-        if not uc or not pc: raise ValueError('CSV must include user_id and permission_id columns')
-        pairs=set()
-        for row in reader:
-            u=(row.get(uc) or '').strip(); p=(row.get(pc) or '').strip()
-            if not u or not p: raise ValueError('Blank user/permission row; source must be corrected')
-            pairs.add((u,p))
-        did=key.split('/')[1]; result=compute(did,list(pairs)); sha=hashlib.sha256(raw).hexdigest(); ts=stamp()
-        t=table()
-        source=(obj.get('Metadata',{}).get('source-url') or 'Operator supplied upload')
-        name=(obj.get('Metadata',{}).get('dataset-name') or key.rsplit('/',1)[-1])
-        license_note=(obj.get('Metadata',{}).get('license-note') or 'Not provided')
-        t.put_item(Item={'pk':f'DATASET#{did}','sk':'META','name':name,'source_url':source,'license_note':license_note,'sha256':sha,'s3_key':key,'uploaded_at':ts,'run_id':did,'counts':result['counts']})
-        result_key=f'results/{did}.json'
-        s3.put_object(Bucket=bucket,Key=result_key,Body=json.dumps(result,separators=(',',':')).encode(),ContentType='application/json',ServerSideEncryption='AES256')
-        t.put_item(Item={'pk':f'DATASET#{did}','sk':'ANALYSIS','result_key':result_key,'created_at':ts})
-        results.append({'dataset_id':did,'sha256':sha,'counts':result['counts']})
+        bucket = record['s3']['bucket']['name']
+        key = urllib.parse.unquote_plus(record['s3']['object']['key'])
+        if not key.startswith('raw/') or not key.lower().endswith('.csv'):
+            continue
+        did = key.split('/')[1]
+        prior = store.item(did,'META')
+        if prior and prior.get('status') == 'ready':
+            results.append({'dataset_id':did,'status':'already_processed'})
+            continue
+        try:
+            obj = s3.get_object(Bucket=bucket,Key=key)
+            pairs,quality = parse_csv(obj['Body'].read(MAX_BYTES+1))
+            result = compute(did,pairs)
+            result.update(policy_version=1,quality=quality)
+            metadata,ts = obj.get('Metadata',{}),stamp()
+            result_key = f'results/{did}/source.json'
+            store.put_artifact(result_key,result)
+            expiry = int(time.time()) + 30*86400
+            meta = {'pk':f'DATASET#{did}','sk':'META','name':metadata.get('dataset-name',key.rsplit('/',1)[-1]),
+                    'source_url':metadata.get('source-url','Operator supplied; not verified'),'license_note':metadata.get('license-note','Not provided'),
+                    'sha256':quality['sha256'],'s3_key':key,'uploaded_at':ts,'run_id':did,'counts':result['counts'],
+                    'policy_version':1,'source_result_key':result_key,'active_key':result_key,'status':'ready','expires_at':expiry}
+            store.table.put_item(Item=meta)
+            store.table.put_item(Item={'pk':f'DATASET#{did}','sk':'ANALYSIS','result_key':result_key,'created_at':ts,'expires_at':expiry})
+            store.table.put_item(Item={'pk':f'DATASET#{did}','sk':'VERSION#00000001','version':1,'parent_version':None,
+                                      'change_summary':'Imported immutable source grants','actor':'dataset-import','created_at':ts,'expires_at':expiry})
+            store.table.put_item(Item={'pk':f'DATASET#{did}','sk':'AUDIT#'+ts,'actor':'dataset-import','action':'dataset_import',
+                                      'details':quality,'created_at':ts,'expires_at':expiry})
+            results.append({'dataset_id':did,'status':'ready','counts':result['counts']})
+        except (ValueError,UnicodeDecodeError) as e:
+            store.table.put_item(Item={'pk':f'DATASET#{did}','sk':'META','status':'failed','name':key.rsplit('/',1)[-1],
+                                      'error':str(e),'uploaded_at':stamp(),'expires_at':int(time.time())+30*86400})
+            log.warning('Dataset validation failed for %s: %s',did,e)
+            results.append({'dataset_id':did,'status':'failed'})
     return results
 
-def api_handler(event, context):
-    """API Gateway HTTP API. JWT authorization is enforced by API Gateway Cognito authorizer."""
-    method=event.get('requestContext',{}).get('http',{}).get('method','GET')
-    path=event.get('rawPath','/'); t=table()
+def api_handler(event,context):
+    claims = event.get('requestContext',{}).get('authorizer',{}).get('jwt',{}).get('claims',{})
+    if not claims.get('sub'):
+        return response(401,{'error':'Authenticated Cognito administrator required'})
+    method = event.get('requestContext',{}).get('http',{}).get('method','GET')
+    path = event.get('rawPath','/').strip('/')
     try:
-        if method=='POST' and path.endswith('/datasets/presign'):
-            body=json.loads(event.get('body') or '{}'); filename=os.path.basename(body.get('filename','dataset.csv'))
-            if not filename.lower().endswith('.csv'): return response(400,{'error':'CSV only'})
-            did=str(uuid.uuid4()); key=f"raw/{did}/{filename}"
-            url=s3.generate_presigned_url('put_object',Params={'Bucket':os.environ['RAW_BUCKET'],'Key':key,'ContentType':'text/csv','Metadata':{'source-url':str(body.get('source_url') or 'operator-upload')[:512],'dataset-name':str(body.get('name') or filename)[:200],'license-note':str(body.get('license_note') or 'Not provided')[:512]}},ExpiresIn=300)
-            return response(200,{'dataset_id':did,'upload_url':url,'s3_key':key,'expires_seconds':300,'next':'PUT the CSV to upload_url; S3 event runs analysis.'})
-        if method=='GET' and path.endswith('/datasets'):
-            # This project-scale scan is intentionally bounded by DynamoDB pagination; production should use a GSI.
-            data=t.scan(FilterExpression='sk = :meta',ExpressionAttributeValues={':meta':'META'},Limit=100)
-            return response(200,{'datasets':[simplify(x) for x in data.get('Items',[])]})
-        if method=='GET' and '/analytics/' in path:
-            did=path.rsplit('/',1)[-1]
-            row=t.get_item(Key={'pk':f'DATASET#{did}','sk':'ANALYSIS'}).get('Item')
-            if not row: return response(404,{'error':'Dataset analysis is not ready or does not exist'})
-            meta=t.get_item(Key={'pk':f'DATASET#{did}','sk':'META'}).get('Item',{})
-            result=s3.get_object(Bucket=os.environ['RAW_BUCKET'],Key=row['result_key'])['Body'].read()
-            return response(200,{'dataset':simplify(meta),'analysis':json.loads(result)})
-        if method=='POST' and path.endswith('/security/validate'):
-            body=json.loads(event.get('body') or '{}'); document=body.get('policy_document')
-            if not isinstance(document,(dict,str)): return response(400,{'error':'policy_document must be a JSON object or JSON string'})
-            doc=json.dumps(document) if isinstance(document,dict) else document
-            result=boto3.client('access-analyzer').validate_policy(policyType='IDENTITY_POLICY',policyDocument=doc)
-            return response(200,{'findings':result.get('findings',[]),'scope':'IAM Access Analyzer policy validation findings; not a proof that access is safe or least-privilege.'})
-        return response(404,{'error':'Route not found'})
-    except Exception as e:
+        raw = event.get('body') or '{}'
+        if event.get('isBase64Encoded'):
+            raw = base64.b64decode(raw).decode()
+        body = json.loads(raw)
+        if not isinstance(body,dict):
+            raise ValueError('JSON object required')
+        store = CloudStore()
+        if method == 'POST' and path == 'datasets/presign':
+            filename = str(body.get('filename','')).replace('\\','/').rsplit('/',1)[-1]
+            if not filename.lower().endswith('.csv'):
+                raise ValueError('CSV filename required')
+            metadata = {k:str(body.get(v) or default)[:limit] for k,v,default,limit in [
+                ('source-url','source_url','operator-upload',512),('dataset-name','name',filename,200),('license-note','license_note','Not provided',512)]}
+            if any(not v.isascii() or '\n' in v or '\r' in v for v in metadata.values()):
+                raise ValueError('S3 upload metadata must be single-line ASCII text')
+            did,ts = str(uuid.uuid4()),stamp()
+            key = f'raw/{did}/{filename}'
+            url = s3.generate_presigned_url('put_object',Params={'Bucket':store.bucket,'Key':key,'ContentType':'text/csv',
+                    'Metadata':metadata,'IfNoneMatch':'*'},ExpiresIn=300)
+            store.table.put_item(Item={'pk':f'DATASET#{did}','sk':'META','name':metadata['dataset-name'],'status':'pending',
+                                      'uploaded_at':ts,'expires_at':int(time.time())+30*86400})
+            return response(200,{'dataset_id':did,'upload_url':url,'headers':{'content-type':'text/csv','if-none-match':'*',
+                       **{'x-amz-meta-'+k:v for k,v in metadata.items()}},'max_bytes':MAX_BYTES,'expires_seconds':300})
+        if method == 'POST' and path == 'security/validate':
+            document = body.get('policy_document')
+            if not isinstance(document,(dict,str)):
+                raise ValueError('policy_document must be an IAM policy object or JSON string')
+            import boto3
+            result = boto3.client('access-analyzer').validate_policy(policyType='IDENTITY_POLICY',policyDocument=json.dumps(document) if isinstance(document,dict) else document)
+            return response(200,{'findings':result.get('findings',[]),'scope':'IAM policy validation; not a proof of dataset access safety'})
+        status,payload = dispatch(method,path,event.get('queryStringParameters') or {},body,store,claims['sub'])
+        return response(status,payload)
+    except (ValueError,UnicodeDecodeError) as e:
         return response(400,{'error':str(e)})
+    except Exception:
+        log.exception('Request failed')
+        return response(500,{'error':'AWS operation failed; see the Lambda log for this request','request_id':getattr(context,'aws_request_id',None)})
 
-def simplify(item):
-    return {k:item[k] for k in ('name','source_url','license_note','sha256','uploaded_at','counts','run_id') if k in item}|{'dataset_id':item['pk'].removeprefix('DATASET#')}
+def json_default(value):
+    if isinstance(value,Decimal):
+        return int(value) if value == value.to_integral() else float(value)
+    raise TypeError(f'Unsupported response type: {type(value).__name__}')
+
 def response(status,body):
-    return {'statusCode':status,'headers':{'content-type':'application/json','cache-control':'no-store'},'body':json.dumps(body,default=str)}
+    encoded = json.dumps(body,default=json_default,separators=(',',':'))
+    if len(encoded.encode()) > 5_500_000:
+        return {'statusCode':413,'headers':{'content-type':'application/json'},'body':json.dumps({'error':'Response exceeds the demo API limit. Use compact=1 or paginated catalog endpoints.'})}
+    return {'statusCode':status,'headers':{'content-type':'application/json','cache-control':'no-store'},'body':encoded}
