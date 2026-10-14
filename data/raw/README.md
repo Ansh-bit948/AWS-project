@@ -1,7 +1,1 @@
-# Real source data
-
-`firewall1_UPA.txt` is the untouched published source attributed in ../NOTICE.md. Its CSV is a mechanical conversion of observed grants.
-
-The Amazon history preparation script downloads the official UCI Amazon Access Samples archive here and extracts its actual access-change history. These larger files are ignored by Git. Hashes and measured counts appear in the derived evaluation.
-
-Do not add generated users, access grants, approval feedback, business attributes or fabricated logs. New sources need their own attribution, immutable file and measured provenance.
+# Real source data\n\n`firewall1_UPA.txt` is the original published Firewall1 matrix attributed in `../NOTICE.md`.\n\nFive independent benchmark matrices used as import-ready samples are stored in `../../test_sets/`. Their original source files, download links, SHA-256 values, published count checks, field definitions and deterministic feature-generation method are documented in `../../test_sets/README.md` and `../../test_sets/manifest.json`.\n\nNo Amazon history dataset is part of the project. Do not add generated users, grants, approval outcomes, business attributes or fabricated logs. New data requires its own source, license note, immutable original and measured provenance.\n\n\n\n

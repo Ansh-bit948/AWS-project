@@ -1,0 +1,67 @@
+{
+  "source_collection": "HP Labs real-world role-mining access-control matrices",
+  "repository": "https://github.com/carblu/rolemining/tree/main/datasets",
+  "research_reference": "https://doi.org/10.1145/1387309.1387312",
+  "fields": [
+    "user_id",
+    "permission_id",
+    "derived_user_assignment_count",
+    "derived_permission_user_count",
+    "derived_user_access_density",
+    "derived_permission_prevalence",
+    "derived_user_degree_percentile",
+    "derived_permission_degree_percentile"
+  ],
+  "field_semantics": {
+    "user_id": "Source's anonymized user identifier",
+    "permission_id": "Source's permission/resource identifier",
+    "derived_user_assignment_count": "Number of distinct permissions assigned to this user in this matrix",
+    "derived_permission_user_count": "Number of distinct users assigned this permission in this matrix",
+    "derived_user_access_density": "User assignment count divided by source permission count",
+    "derived_permission_prevalence": "Permission user count divided by source user count",
+    "derived_user_degree_percentile": "Empirical percentile rank of the user's assignment count among source users",
+    "derived_permission_degree_percentile": "Empirical percentile rank of the permission's user count among source permissions"
+  },
+  "datasets": {
+    "americas_small": {
+      "source_file": "americas_small.source.txt",
+      "csv_file": "americas_small.csv",
+      "source_sha256": "dfdd68ceedda7f7153b1e908f9b616f24cf8c55a146de73d67e81c1bfcd57770",
+      "users": 3477,
+      "permissions": 1587,
+      "assignments": 105205
+    },
+    "apj": {
+      "source_file": "apj.source.txt",
+      "csv_file": "apj.csv",
+      "source_sha256": "7f4106402caf47f6cef0b9df0ddca64529df8529b226f81c47c3cafe0f854fa4",
+      "users": 2044,
+      "permissions": 1164,
+      "assignments": 6841
+    },
+    "healthcare": {
+      "source_file": "healthcare.source.txt",
+      "csv_file": "healthcare.csv",
+      "source_sha256": "63557caafb670ca0e17c391cb8deadc4e06df58934a6a4b45ae4f73d71a698cb",
+      "users": 46,
+      "permissions": 46,
+      "assignments": 1486
+    },
+    "domino": {
+      "source_file": "domino.source.txt",
+      "csv_file": "domino.csv",
+      "source_sha256": "bbbf7717a8d3bc2ddee44ebbd13d97d8d60095c6fb337caa14635d5d03b377c7",
+      "users": 79,
+      "permissions": 231,
+      "assignments": 730
+    },
+    "firewall2": {
+      "source_file": "firewall2.source.txt",
+      "csv_file": "firewall2.csv",
+      "source_sha256": "c2a34e45b55747d4d5b4c6dbcf5145b8058a6502ad25f5a25af655239833592d",
+      "users": 325,
+      "permissions": 590,
+      "assignments": 36428
+    }
+  }
+}

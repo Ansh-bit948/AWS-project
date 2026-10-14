@@ -72,7 +72,9 @@ def dispatch(method, path, query, body, store, actor):
                 removed.add((u,p))
             else:
                 removed.discard((u,p))
-            result = compute(did,[x for x in source if x not in removed],sorted({u for u,p in source}),sorted({p for u,p in source})) if changed else a
+            source_context = {'users': {x['user_id']: x['access_history'] for x in a['profiles'] if x.get('access_history')},
+                              'permission_support': {x['permission_id']: x['source_active_users'] for x in a['permission_catalog'] if x.get('source_active_users') is not None}}
+            result = compute(did,[x for x in source if x not in removed],sorted({u for u,p in source}),sorted({p for u,p in source}),source_context) if changed else a
             result['policy_version'] = expected + int(changed)
             if 'quality' in a:
                 result['quality'] = a['quality']
