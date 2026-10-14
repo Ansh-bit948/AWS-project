@@ -1,0 +1,52 @@
+{
+  "source_url": "https://archive.ics.uci.edu/dataset/216/amazon+access+samples",
+  "download_url": "https://archive.ics.uci.edu/static/public/216/amazon+access+samples.zip",
+  "citation": "Montanez, K. (2011). Amazon Access Samples. DOI:10.24432/C5JW2K. CC BY 4.0.",
+  "source_history_file": "data/raw/amazon_access_history.csv",
+  "source_history_sha256": "83db6197bd4a205b0fd7b0ce931123f16d98f379a26bdcfa2193be363b54bf17",
+  "source_rows_read": 716063,
+  "invalid_rows_skipped": 412,
+  "method": "Sort valid source events by AUTHORIZATION_DATE and original file row number, apply add_access/remove_access events from earliest available record, and emit active observed grants through each year-end cutoff. No records are invented. These are temporal snapshots from one dataset, not five independent datasets. Source timestamps have no stated timezone.",
+  "snapshots": [
+    {
+      "file": "amazon_access_snapshot_2006.csv",
+      "snapshot_as_of": "2006-12-31T23:59:59",
+      "users": 4212,
+      "permissions": 828,
+      "grants": 13027,
+      "sha256": "a646a3172d8108b82db4ce31ab08e0742b72d882ed552da645b2a3f71828bdf9"
+    },
+    {
+      "file": "amazon_access_snapshot_2007.csv",
+      "snapshot_as_of": "2007-12-31T23:59:59",
+      "users": 6222,
+      "permissions": 1351,
+      "grants": 24107,
+      "sha256": "0197737230c215651d6476409045f4b802a01a5ef1cb5996fd753a64f4333cd9"
+    },
+    {
+      "file": "amazon_access_snapshot_2008.csv",
+      "snapshot_as_of": "2008-12-31T23:59:59",
+      "users": 9492,
+      "permissions": 3056,
+      "grants": 53557,
+      "sha256": "e9c765052d23d449414e4670741db961e57961e90a2cd9b5da635660471abc66"
+    },
+    {
+      "file": "amazon_access_snapshot_2009.csv",
+      "snapshot_as_of": "2009-12-31T23:59:59",
+      "users": 13080,
+      "permissions": 4812,
+      "grants": 98109,
+      "sha256": "9f931e2a4a830b6401de16d6e0c69e0605b934e15a95986779eb1f90e44353db"
+    },
+    {
+      "file": "amazon_access_snapshot_2010.csv",
+      "snapshot_as_of": "2010-12-31T23:59:59",
+      "users": 17568,
+      "permissions": 6291,
+      "grants": 136196,
+      "sha256": "aa6ee005774be102a40ffabf2d85d67e426177615f8d0aaaf5c0352ba0635c63"
+    }
+  ]
+}
