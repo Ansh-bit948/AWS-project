@@ -642,6 +642,7 @@
                         <th>User</th>
                         <th>Grants</th>
                         <th>Density</th>
+                        <th>Access percentile</th>
                         <th>Rare grants</th>
                       </tr>
                     </thead>
@@ -694,6 +695,7 @@
                         <th>Permission</th>
                         <th>Users</th>
                         <th>User support</th>
+                        <th>Prevalence percentile</th>
                       </tr>
                     </thead>
                     <tbody id="permissionsBody"></tbody>
@@ -715,8 +717,8 @@
               </article>
             </div>
             <p class="help-note">
-              These profiles describe the access matrix. HR attributes and
-              temporal behavior are not inferred from missing data.
+              History fields appear only when provided by the source. HR
+              attributes and job titles are never inferred from identifiers.
             </p>
           </section>
           <section
@@ -917,65 +919,6 @@
                 </p>
               </div>
             </div>
-            <article class="card panel">
-              <div class="panel-head">
-                <div class="panel-title">
-                  <span class="panel-icon"
-                    ><svg class="icon" aria-hidden="true">
-                      <use href="#i-chart" /></svg
-                  ></span>
-                  <div>
-                    <p class="eyebrow">AMAZON ACCESS SAMPLES</p>
-                    <h2>Enterprise access-change history</h2>
-                  </div>
-                </div>
-                <button id="historyExport" class="btn secondary">
-                  <svg class="icon" aria-hidden="true">
-                    <use href="#i-download" />
-                  </svg>
-                  Export model
-                </button>
-              </div>
-              <div id="historySummary" class="history-summary">
-                Loading the recorded experiment.
-              </div>
-              <div id="temporalMetrics" class="temporal-metrics" hidden>
-                <div><small>RECORDED CHANGES</small><b id="tEvents"></b></div>
-                <div><small>SOURCE USERS</small><b id="tUsers"></b></div>
-                <div>
-                  <small>TARGET IDENTIFIERS</small><b id="tTargets"></b>
-                </div>
-                <div><small>HELD-OUT EVENTS</small><b id="tHoldout"></b></div>
-              </div>
-              <div id="learningEvaluation" class="learning-evaluation" hidden>
-                <div>
-                  <h3>Recorded-action agreement</h3>
-                  <p>A descriptive comparison, not a safety or threat score.</p>
-                  <div class="evaluation-row">
-                    <span>Learning policy</span>
-                    <div class="chart-track">
-                      <i id="learningBar" class="chart-fill selected"></i>
-                    </div>
-                    <b id="learningAgreement"></b>
-                  </div>
-                  <div class="evaluation-row">
-                    <span>Majority baseline</span>
-                    <div class="chart-track">
-                      <i id="majorityBar" class="chart-fill baseline"></i>
-                    </div>
-                    <b id="majorityAgreement"></b>
-                  </div>
-                </div>
-                <div class="evaluation-note">
-                  <span id="modelComparison" class="badge warning"></span>
-                  <p id="temporalSplit"></p>
-                  <small
-                    >Recorded authorization delay is the learning outcome.
-                    Historical actions do not change the active policy.</small
-                  >
-                </div>
-              </div>
-            </article>
             <article class="card panel feedback-panel">
               <div>
                 <p class="eyebrow">ADMINISTRATOR FEEDBACK</p>
@@ -983,7 +926,8 @@
                 <p>
                   Train the feedback model after at least five genuine reviews
                   across two users. Unseen or ambiguous states require review;
-                  every change still needs approval.
+                  every change still needs approval. The current static
+                  benchmark matrices do not contain temporal outcomes.
                 </p>
               </div>
               <button class="btn dark" id="train">

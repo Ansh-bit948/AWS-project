@@ -44,7 +44,8 @@ class LocalStore:
             return [dict(r) | {'dataset_id': r['id'], 'status': 'ready'} for r in c.execute('SELECT * FROM datasets ORDER BY uploaded_at DESC')]
     def import_data(self, pairs, meta, quality, actor='local-admin'):
         did, rid, ts = str(uuid.uuid4()), str(uuid.uuid4()), stamp()
-        result = compute(did, pairs)
+        source_context = quality.pop('source_context', None)
+        result = compute(did, pairs, source_context=source_context)
         result.update(policy_version=1, quality=quality)
         with self.db() as c:
             c.execute('INSERT INTO datasets VALUES(?,?,?,?,?,?,?,?,?,?,?)',

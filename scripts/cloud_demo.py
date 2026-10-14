@@ -14,7 +14,6 @@ def main():
     parser.add_argument('--setup-login',action='store_true')
     parser.add_argument('--username')
     parser.add_argument('--verify',action='store_true')
-    parser.add_argument('--publish-history',action='store_true')
     parser.add_argument('--region',default='us-east-1')
     parser.add_argument('--stack',default='ieai-alp')
     args=parser.parse_args()
@@ -41,14 +40,6 @@ def main():
         if resource['ResourceType']=='AWS::Lambda::Function':
             try:logs.put_retention_policy(logGroupName='/aws/lambda/'+resource['PhysicalResourceId'],retentionInDays=7)
             except logs.exceptions.ResourceNotFoundException:pass
-    if args.publish_history:
-        artifact=ROOT/'data/processed/amazon_history_analysis.json'
-        if not artifact.exists():
-            raise RuntimeError('Run prepare_amazon_history.py before publishing the historical experiment')
-        s3=session.client('s3')
-        s3.put_object(Bucket=outputs['RawBucket'],Key='results/amazon-history/analysis.json',Body=artifact.read_bytes(),ContentType='application/json',ServerSideEncryption='AES256')
-        s3.upload_file(str(ROOT/'data/raw/amazon_access_samples.zip'),outputs['RawBucket'],'raw/amazon-source/amazon_access_samples.zip',ExtraArgs={'ServerSideEncryption':'AES256','Metadata':{'source-url':'https://archive.ics.uci.edu/dataset/216/amazon+access+samples','license-note':'CC BY 4.0'}})
-        print('Published genuine history analysis and original source archive to private S3.')
     if not args.verify:return
     creds=json.loads(credfile.read_text(encoding='utf-8'))
     auth=cognito.initiate_auth(ClientId=outputs['UserPoolClientId'],AuthFlow='USER_PASSWORD_AUTH',

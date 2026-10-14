@@ -12,7 +12,6 @@ flowchart LR
   API --> Meta
   API --> Artifact
   API -->|conditional transaction| Version[Decisions + versions + audit]
-  Offline[Real Amazon history processor] -->|computed artifact| Artifact
   API --> Validator[IAM Access Analyzer]
   Worker --> Logs[CloudWatch logs]
   API --> Logs
@@ -31,6 +30,6 @@ The UI requests compact analytics and paginated catalogs; it does not manufactur
 
 Cognito public sign-up is disabled. API Gateway validates the JWT; Lambda also requires authorizer claims. Actor identity comes from the authenticated subject, never a submitted actor field. S3 is private/encrypted. CORS is restricted to the local UI origin. The local API binds to loopback and rejects foreign browser origins.
 
-The historical experiment is intentionally separate: actual Amazon add/remove events and authorization delays feed temporal profiles and terminal Q-learning. It has a chronological holdout and a support mask. It neither joins unrelated user populations nor changes the active permission policy.
+The five retained benchmark matrices are static grants. They support structural access analytics but contain no event timestamps or authorization outcomes. The learning workflow consumes only actual human review decisions and is unavailable until its evidence threshold is met.
 
 This demo uses application authorization, not an ERP connector or AWS principal provisioning. Account CloudTrail management history is AWS account evidence, not an ERP event source. No paid analyzer, CloudTrail data-event trail, Neptune or always-running compute is created.

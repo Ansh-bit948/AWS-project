@@ -41,7 +41,8 @@ def process_s3(event,context):
         try:
             obj = s3.get_object(Bucket=bucket,Key=key)
             pairs,quality = parse_csv(obj['Body'].read(MAX_BYTES+1))
-            result = compute(did,pairs)
+            source_context = quality.pop('source_context', None)
+            result = compute(did,pairs,source_context=source_context)
             result.update(policy_version=1,quality=quality)
             metadata,ts = obj.get('Metadata',{}),stamp()
             result_key = f'results/{did}/source.json'
@@ -97,9 +98,6 @@ def api_handler(event,context):
                                       'uploaded_at':ts,'expires_at':int(time.time())+30*86400})
             return response(200,{'dataset_id':did,'upload_url':url,'headers':{'content-type':'text/csv','if-none-match':'*',
                        **{'x-amz-meta-'+k:v for k,v in metadata.items()}},'max_bytes':MAX_BYTES,'expires_seconds':300})
-        if method == 'GET' and path == 'research/amazon':
-            from app.cloud_store import artifact
-            return response(200,artifact(store.bucket,'results/amazon-history/analysis.json'))
         if method == 'POST' and path == 'security/validate':
             document = body.get('policy_document')
             if not isinstance(document,(dict,str)):

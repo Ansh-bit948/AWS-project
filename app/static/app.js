@@ -403,7 +403,6 @@ async function load() {
       loadTable("permission_catalog"),
       loadReview(),
       loadHistory(),
-      loadTemporal(),
     ]);
     status(
       isCloud
@@ -462,6 +461,8 @@ async function loadTable(kind) {
               "</td><td>" +
               (r.permission_density * 100).toFixed(2) +
               "%</td><td>" +
+              (r.access_percentile * 100).toFixed(1) +
+              "%</td><td>" +
               r.rare_grant_count +
               "</td></tr>"
             : "<tr><td>" +
@@ -470,6 +471,8 @@ async function loadTable(kind) {
               fmt(r.user_count) +
               "</td><td>" +
               (r.support * 100).toFixed(2) +
+              "%</td><td>" +
+              (r.prevalence_percentile * 100).toFixed(1) +
               "%</td></tr>",
       )
       .join("") || '<tr><td colspan="4">No matching records</td></tr>';
@@ -712,57 +715,8 @@ $("#export").onclick = async () => {
     status(x.message, true);
   }
 };
-let historical = null;
 initWorkspace();
 refreshDatasets();
-
-async function loadTemporal() {
-  try {
-    historical = await call("/research/amazon");
-    const x = historical;
-    const agreement = x.evaluation.observed_action_agreement;
-    $("#historySummary").textContent =
-      (x.time_range?.first?.slice(0, 10) || "Date not recorded") +
-      " to " +
-      (x.time_range?.last?.slice(0, 10) || "date not recorded") +
-      " · An independent source population. Historical change records, not ERP transactions.";
-    $("#temporalMetrics").hidden = false;
-    $("#learningEvaluation").hidden = false;
-    $("#tEvents").textContent = fmt(x.counts.valid_events);
-    $("#tUsers").textContent = fmt(x.counts.users);
-    $("#tTargets").textContent = fmt(x.counts.targets);
-    $("#tHoldout").textContent = fmt(x.model.heldout_records);
-    $("#learningAgreement").textContent =
-      agreement === null ? "Not evaluated" : (agreement * 100).toFixed(2) + "%";
-    $("#majorityAgreement").textContent =
-      (x.evaluation.majority_baseline_agreement * 100).toFixed(2) + "%";
-    $("#learningBar").style.width =
-      agreement === null ? "0%" : agreement * 100 + "%";
-    $("#majorityBar").style.width =
-      x.evaluation.majority_baseline_agreement * 100 + "%";
-    $("#modelComparison").textContent =
-      agreement === null
-        ? "Insufficient evidence"
-        : agreement < x.evaluation.majority_baseline_agreement
-          ? "Below the majority baseline"
-          : "At or above the majority baseline";
-    $("#temporalSplit").textContent =
-      fmt(x.model.training_records) +
-      " earlier training records; " +
-      fmt(x.model.heldout_records) +
-      " later held-out records. Supported-action coverage: " +
-      (x.evaluation.coverage * 100).toFixed(2) +
-      "%.";
-    $("#historyExport").disabled = false;
-  } catch (e) {
-    $("#historySummary").textContent = e.message;
-    $("#historyExport").disabled = true;
-    $("#temporalMetrics").hidden = true;
-    $("#learningEvaluation").hidden = true;
-  }
-}
-$("#historyExport").onclick = () =>
-  historical && download(historical, "amazon-history-model.json");
 
 function parseRecorded(value) {
   if (value && typeof value === "object") return value;

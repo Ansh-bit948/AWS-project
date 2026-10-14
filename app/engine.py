@@ -6,6 +6,15 @@ ENGINE_VERSION = '2.0.0'
 def wsc(roles):
     return len(roles) + sum(len(r['users']) + len(r['permissions']) for r in roles)
 
+def degree_percentiles(counts):
+    frequencies = Counter(counts.values())
+    total = len(counts)
+    cumulative, ranks = 0, {}
+    for value in sorted(frequencies):
+        cumulative += frequencies[value]
+        ranks[value] = round(cumulative / max(1, total), 6)
+    return {key: ranks[value] for key, value in counts.items()}
+
 def factor_roles(cohorts, max_steps=64):
     residual = [{'users': set(us), 'permissions': set(ps)} for ps, us in cohorts.items()]
     shared, steps = [], 0
@@ -35,7 +44,7 @@ def factor_roles(cohorts, max_steps=64):
         steps += 1
     return [r for r in residual + shared if r['permissions']], steps
 
-def compute(dataset_id, rows, universe_users=None, universe_permissions=None):
+def compute(dataset_id, rows, universe_users=None, universe_permissions=None, source_context=None):
     start = perf_counter()
     pairs = set(map(tuple, rows))
     by_user = {u: set() for u in (universe_users or [])}
@@ -43,6 +52,8 @@ def compute(dataset_id, rows, universe_users=None, universe_permissions=None):
         by_user.setdefault(u, set()).add(p)
     all_permissions = set(universe_permissions or []) | {p for _, p in pairs}
     support = Counter(p for _, p in pairs)
+    user_percentiles = degree_percentiles({u: len(ps) for u, ps in by_user.items()})
+    permission_percentiles = degree_percentiles(support)
     users, perms, edges = len(by_user), len(all_permissions), len(pairs)
     cohorts = defaultdict(list)
     for u, ps in sorted(by_user.items()):
@@ -69,16 +80,26 @@ def compute(dataset_id, rows, universe_users=None, universe_permissions=None):
     for r in role_rows:
         r['coverage'] = 1.0
     risk, profiles = [], []
+    source_context = source_context or {}
+    source_users = source_context.get('users', {})
+    source_permissions = source_context.get('permission_support', {})
     for u, ps in sorted(by_user.items()):
         rare = sorted((p for p in ps if support[p] / max(1, users) <= .05), key=lambda p: (support[p], p))
         density, rarity = len(ps) / max(1, perms), len(rare) / max(1, len(ps))
-        score = round(65 * rarity + 35 * density, 2)
+        percentile = user_percentiles[u]
+        score = round(55 * rarity + 30 * density + 15 * percentile, 2)
         if rare or score >= 25:
             risk.append({'user_id': u, 'score': score, 'grant_count': len(ps), 'rare_permissions': rare,
-                         'components': {'rarity_fraction': round(rarity, 5), 'density': round(density, 5)},
-                         'reasons': [f'{len(rare)} grants supported by <=5% of users', f'{density:.2%} of known permissions assigned']})
+                         'components': {'rarity_fraction': round(rarity, 5), 'density': round(density, 5),
+                                        'user_degree_percentile': percentile},
+                         'reasons': [f'{len(rare)} grants supported by <=5% of users',
+                                     f'{density:.2%} of known permissions assigned',
+                                     f'user grant count is at the {percentile:.0%} empirical percentile']})
+        history = source_users.get(u)
         profiles.append({'user_id': u, 'observed_grants': len(ps), 'permission_density': round(density, 5),
-                         'rare_grant_count': len(rare), 'attribute_status': 'Not provided by dataset',
+                         'access_percentile': percentile,
+                         'rare_grant_count': len(rare), 'attribute_status': 'Observed access history' if history else 'Not provided by dataset',
+                         'access_history': history,
                          'role_ids': user_roles[u], 'cohort_role': user_roles[u][0] if user_roles[u] else None})
     risk.sort(key=lambda x: (-x['score'], x['user_id']))
     ua, pa = sum(r['user_count'] for r in role_rows), sum(r['permission_count'] for r in role_rows)
@@ -93,11 +114,13 @@ def compute(dataset_id, rows, universe_users=None, universe_permissions=None):
             'risk_summary': {'high': sum(x['score'] >= 70 for x in risk),
                              'medium': sum(35 <= x['score'] < 70 for x in risk), 'review': sum(x['score'] < 35 for x in risk)},
             'roles': role_rows, 'profiles': profiles, 'risk_findings': risk,
-            'permission_catalog': [{'permission_id': p, 'user_count': support[p], 'support': round(support[p] / max(1, users), 6)} for p in sorted(all_permissions)],
+            'permission_catalog': [{'permission_id': p, 'user_count': support[p], 'support': round(support[p] / max(1, users), 6),
+                                   'prevalence_percentile': permission_percentiles[p],
+                                   'source_active_users': source_permissions.get(p)} for p in sorted(all_permissions)],
             'performance': {'compute_ms': round((perf_counter() - start) * 1000, 3), 'representation': 'sparse Python sets; no dense U x P allocation'},
             'methodology': {'role_discovery': 'Exact access cohorts then bounded greedy support-signature factoring; best unit WSC candidate selected',
                             'optimization': 'Unit WSC = R + UA + PA; reconstructed edges checked for missing and extra grants; no global optimality claim',
-                            'risk': '65% grant rarity fraction + 35% permission density; review signals, no confirmed-threat labels',
-                            'attributes': 'ACL structural features only; no HR or temporal attributes inferred',
+                            'risk': '55% grant rarity fraction + 30% permission density + 15% user grant-count percentile; review signals, no confirmed-threat labels',
+                            'attributes': 'Uses source-provided per-user access-change counts, last authorization time, and authorization delay when supplied; otherwise ACL structural features only. No HR attributes inferred',
                             'reinforcement_learning': 'Offline terminal Q-learning uses genuine administrator review feedback only; no simulated rewards',
                             'data_scope': 'Named access-control benchmark, not an operational ERP integration'}}
