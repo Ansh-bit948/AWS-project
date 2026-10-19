@@ -787,7 +787,7 @@ function initWorkspace() {
     ],
     temporal: [
       "Learning lab",
-      "Real outcomes, transparent baselines, and reviewed recommendations.",
+      "Learn from genuine administrator reviews after enough evidence is collected.",
       "ADAPTIVE INTELLIGENCE",
     ],
     dataset: [

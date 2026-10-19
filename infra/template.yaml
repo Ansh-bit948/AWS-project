@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: IEAI-ALP cost-conscious event-driven access intelligence research stack
 Parameters:
-  AllowedOrigin:
+  AllowedOrigins:
     Type: String
     Default: 'http://127.0.0.1:8000'
-    Description: Local demo origin allowed to call the API and upload to S3.
+    Description: Primary local demo origin allowed to call the API and upload to S3.
   AppName:
     Type: String
     Default: ieai-alp
@@ -62,7 +62,7 @@ Resources:
         RestrictPublicBuckets: true
       CorsConfiguration:
         CorsRules:
-          - AllowedOrigins: [!Ref AllowedOrigin]
+          - AllowedOrigins: [!Ref AllowedOrigins, 'http://localhost:8000']
             AllowedMethods: [PUT]
             AllowedHeaders: ['*']
             ExposedHeaders: [ETag]
@@ -178,7 +178,7 @@ Resources:
         ThrottlingBurstLimit: 10
         ThrottlingRateLimit: 5
       CorsConfiguration:
-        AllowOrigins: [!Ref AllowedOrigin]
+        AllowOrigins: [!Ref AllowedOrigins, 'http://localhost:8000']
         AllowHeaders: [authorization,content-type]
         AllowMethods: [GET,POST,OPTIONS]
       Auth:
